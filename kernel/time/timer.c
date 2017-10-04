@@ -1844,7 +1844,7 @@ signed long __sched schedule_timeout(signed long timeout)
 
 	timer.task = current;
 	timer_setup_on_stack(&timer.timer, process_timeout, 0);
-	__mod_timer(&timer.timer, expire, 0);
+	__mod_timer(&timer.timer, expire, false);
 	schedule();
 	del_singleshot_timer_sync(&timer.timer);
 
