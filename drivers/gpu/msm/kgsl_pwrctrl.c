@@ -2689,7 +2689,7 @@ static int kgsl_pwrctrl_enable(struct kgsl_device *device)
 	} else if (kgsl_popp_check(device)) {
 		level = pwr->active_pwrlevel;
 	} else {
-		level = pwr->default_pwrlevel;
+		level = pwr->num_pwrlevels - 2;
 	}
 
 	kgsl_pwrctrl_pwrlevel_change(device, level);
