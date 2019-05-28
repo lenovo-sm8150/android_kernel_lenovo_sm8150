@@ -129,7 +129,7 @@ static void dp_gpio_hpd_work(struct work_struct *work)
 	struct delayed_work *dw = to_delayed_work(work);
 	struct dp_gpio_hpd_private *gpio_hpd = container_of(dw,
 		struct dp_gpio_hpd_private, work);
-	int ret;
+	int ret = 0;
 
 	if (gpio_hpd->hpd) {
 		devm_free_irq(gpio_hpd->dev,
@@ -139,6 +139,8 @@ static void dp_gpio_hpd_work(struct work_struct *work)
 			dp_gpio_isr,
 			IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 			"dp-gpio-intp", gpio_hpd);
+		if (rc)
+			return;
 		dp_gpio_hpd_connect(gpio_hpd, true);
 	} else {
 		devm_free_irq(gpio_hpd->dev,
@@ -148,6 +150,8 @@ static void dp_gpio_hpd_work(struct work_struct *work)
 			dp_gpio_isr,
 			IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 			"dp-gpio-intp", gpio_hpd);
+		if (rc)
+			return;
 		dp_gpio_hpd_connect(gpio_hpd, false);
 	}
 
