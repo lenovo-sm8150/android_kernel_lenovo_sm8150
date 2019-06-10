@@ -204,3 +204,8 @@ config DRM_SDE_ELVSS_DIM_OFF
 	default n
 	help
 	  Disable panel elvss diming
+
+config FENCE_DEBUG
+	bool "Print fence name to userspace"
+	depends on DRM_MSM
+	default n
