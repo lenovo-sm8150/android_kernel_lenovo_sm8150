@@ -1,0 +1,15 @@
+# Lenovo configuration options
+
+menu "Lenovo board selection"
+
+config PRODUCT_HEART
+	bool "Lenovo heart board"
+	help
+		Support for Lenovo Z5 Pro GT
+
+config PRODUCT_ZIPPO
+	bool "Lenovo zippo board"
+	help
+		Support for Lenovo Z6 Pro
+
+endmenu
