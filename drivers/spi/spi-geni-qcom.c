@@ -1726,7 +1726,7 @@ static int spi_geni_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Failed to register SPI master\n");
 		goto spi_geni_probe_unmap;
 	}
-	sysfs_create_file(&(geni_mas->dev->kobj),
+	ret = sysfs_create_file(&(geni_mas->dev->kobj),
 				&dev_attr_spi_slave_state.attr);
 	if (ret)
 		dev_err(&pdev->dev, "Failed to create sysfs\n");
