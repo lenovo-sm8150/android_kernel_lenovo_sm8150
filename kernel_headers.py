@@ -28,11 +28,9 @@ import sys
 
 def gen_version_h(verbose, gen_dir, version_makefile):
   """Generate linux/version.h
-
   Scan the version_makefile for the version info, and then generate
   linux/version.h in the gen_dir as done in kernel Makefile function
   filechk_version.h
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
@@ -116,7 +114,6 @@ def gen_version_h(verbose, gen_dir, version_makefile):
 
 def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_uapi):
   """Scan arch_asm_kbuild for generated headers.
-
   This function processes the Kbuild file to scan for three types of files that
   need to be generated. The first type are syscall generated headers, which are
   identified by adding to the generated-y make variable. The second type are
@@ -124,7 +121,6 @@ def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_
   asm-generic counterpart, and are identified by adding to the generic-y make
   variable. The third type are mandatory headers that should be present in the
   /usr/include/asm folder.
-
   Args:
     verbose: Set True to print progress messages.
     arch_asm_kbuild: The Kbuild file containing lists of headers to generate.
@@ -226,19 +222,16 @@ def scan_arch_kbuild(verbose, arch_asm_kbuild, asm_generic_kbuild, arch_include_
 def gen_arch_headers(
     verbose, gen_dir, arch_asm_kbuild, asm_generic_kbuild, arch_syscall_tool, arch_syscall_tbl, arch_include_uapi):
   """Process arch-specific and asm-generic uapi/asm/Kbuild to generate headers.
-
   The function consists of a call to scan_arch_kbuild followed by three loops.
   The first loop generates headers found and placed in the generated_list by
   scan_arch_kbuild. The second loop generates headers found and placed in the
   generic_list by the scan_arch_kbuild. The third loop generates headers found
   in mandatory_list by scan_arch_kbuild.
-
   The function does some parsing of file names and tool invocations. If that
   parsing fails for some reason (e.g., we don't know how to generate the
   header) or a tool invocation fails, then this function will count that as
   an error but keep processing. In the end, the function returns the number of
   errors encountered.
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
@@ -312,15 +305,12 @@ def gen_arch_headers(
 
 def run_headers_install(verbose, gen_dir, headers_install, prefix, h):
   """Process a header through the headers_install script.
-
   The headers_install script does some processing of a header so that it is
   appropriate for inclusion in a userland program. This function invokes that
   script for one header file.
-
   The input file is a header file found in the directory named by prefix. This
   function stips the prefix from the header to generate the name of the
   processed header.
-
   Args:
     verbose: Set True to print progress messages.
     gen_dir: Where to place the generated files.
@@ -355,13 +345,10 @@ def run_headers_install(verbose, gen_dir, headers_install, prefix, h):
 
 def glob_headers(prefix, rel_glob, excludes):
   """Recursively scan the a directory for headers.
-
   This function recursively scans the directory identified by prefix for
   headers. We don't yet have a new enough version of python3 to use the
   better glob function, so right now we assume the glob is '**/*.h'.
-
   The function filters out any files that match the items in excludes.
-
   Args:
     prefix: The directory to recursively scan for headers.
     rel_glob: The shell-style glob that identifies the header pattern.
@@ -399,10 +386,8 @@ def glob_headers(prefix, rel_glob, excludes):
 
 def find_out(verbose, module_dir, prefix, rel_glob, excludes, outs):
   """Build a list of outputs for the genrule that creates kernel headers.
-
   This function scans for headers in the source tree and produces a list of
   output (generated) headers.
-
   Args:
     verbose: Set True to print progress messages.
     module_dir: The root directory of the kernel source.
@@ -483,14 +468,12 @@ def gen_blueprints(
     verbose, header_arch, gen_dir, arch_asm_kbuild, asm_generic_kbuild, module_dir,
     rel_arch_asm_kbuild, rel_asm_generic_kbuild, arch_include_uapi, techpack_include_uapi):
   """Generate a blueprints file containing modules that invoke this script.
-
   This function generates a blueprints file that contains modules that
   invoke this script to generate kernel headers. We generate the blueprints
   file as needed, but we don't actually use the generated file. The blueprints
   file that we generate ends up in the out directory, and we can use it to
   detect if the checked-in version of the file (in the source directory) is out
   of date. This pattern occurs in the Android source tree in several places.
-
   Args:
     verbose: Set True to print progress messages.
     header_arch: The arch for which to generate headers.
@@ -683,50 +666,6 @@ def gen_blueprints(
 
     return 0
 
-def parse_bp_for_headers(file_name, headers):
-  parsing_headers = False
-  pattern = re.compile("gen_headers_[a-zA-Z0-9]+\s*=\s*\[\s*")
-  with open(file_name, 'r') as f:
-    for line in f:
-      line = line.strip()
-      if pattern.match(line):
-        parsing_headers = True
-        continue
-
-      if line.find("]") != -1 and parsing_headers:
-        break
-
-      if not parsing_headers:
-        continue
-
-      if line.find("//") == 0:
-        continue
-
-      headers.add(line[1:-2])
-
-def headers_diff(old_file, new_file):
-  old_headers = set()
-  new_headers = set()
-  diff_detected = False
-
-  parse_bp_for_headers(old_file, old_headers)
-  parse_bp_for_headers(new_file, new_headers)
-
-  diff = old_headers - new_headers
-  if len(diff):
-    diff_detected = True
-    print("Headers to remove:")
-    for x in diff:
-      print("\t{}".format(x))
-
-  diff = new_headers - old_headers
-  if len(diff):
-    diff_detected = True
-    print("Headers to add:")
-    for x in diff:
-      print("\t{}".format(x))
-
-  return diff_detected
 
 def gen_headers(
     verbose, header_arch, gen_dir, arch_asm_kbuild, asm_generic_kbuild, module_dir,
@@ -734,12 +673,10 @@ def gen_headers(
     arch_syscall_tool, arch_syscall_tbl, headers_install, include_uapi,
     arch_include_uapi, techpack_include_uapi):
   """Generate the kernel headers.
-
   This script generates the version.h file, the arch-specific headers including
   syscall-related generated files and wrappers around generic files, and uses
   the headers_install tool to process other generic uapi and arch-specific uapi
   files.
-
   Args:
     verbose: Set True to print progress messages.
     header_arch: The arch for which to generate headers.
@@ -759,9 +696,9 @@ def gen_headers(
     The number of errors encountered.
   """
 
-  if headers_diff(old_gen_headers_bp, new_gen_headers_bp):
+  if not filecmp.cmp(old_gen_headers_bp, new_gen_headers_bp):
     print('error: gen_headers blueprints file is out of date, suggested fix:')
-    print('#######Please add or remove the above mentioned headers from %s' % (old_gen_headers_bp))
+    print('cp %s %s' % (new_gen_headers_bp, old_gen_headers_bp))
     print('then re-run the build')
     return 1
 
@@ -803,7 +740,6 @@ def extract_techpack_uapi_headers(verbose, module_dir):
 
   """EXtract list of uapi headers from techpack/* directories. We need to export
      these headers to userspace.
-
   Args:
       verbose: Verbose option is provided to script
       module_dir: Base directory
