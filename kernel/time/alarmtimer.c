@@ -35,6 +35,8 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/alarmtimer.h>
 
+extern int timer_stats_active;
+struct alarm *alarm_rtc;
 /**
  * struct alarm_base - Alarm timer bases
  * @lock:		Lock for syncrhonized access to the base
@@ -277,6 +279,7 @@ static int alarmtimer_suspend(struct device *dev)
 	struct rtc_device *rtc;
 	unsigned long flags;
 	struct rtc_time tm;
+	struct timerqueue_node *min_node;
 
 	spin_lock_irqsave(&freezer_delta_lock, flags);
 	min = freezer_delta;
@@ -303,6 +306,7 @@ static int alarmtimer_suspend(struct device *dev)
 			continue;
 		delta = ktime_sub(next->expires, base->gettime());
 		if (!min || (delta < min)) {
+			min_node = next;
 			expires = next->expires;
 			min = delta;
 			type = i;
@@ -310,6 +314,11 @@ static int alarmtimer_suspend(struct device *dev)
 	}
 	if (min == 0)
 		return 0;
+
+	if (timer_stats_active){
+    alarm_rtc = container_of(min_node, struct alarm, node); 
+		printk(KERN_WARNING "[%s]set rtc, owner %d %s \n", __func__, alarm_rtc->timer.start_pid, alarm_rtc->timer.start_comm);
+	}
 
 	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
 		__pm_wakeup_event(ws, 2 * MSEC_PER_SEC);
@@ -330,6 +339,13 @@ static int alarmtimer_suspend(struct device *dev)
 		__pm_wakeup_event(ws, MSEC_PER_SEC);
 	return ret;
 }
+
+void print_wakeup_alarm(void)
+{
+	if (timer_stats_active && alarm_rtc!=NULL)
+		printk(KERN_WARNING "[%s]rtc wake owner %d %s \n", __func__, alarm_rtc->timer.start_pid, alarm_rtc->timer.start_comm);
+}
+EXPORT_SYMBOL_GPL(print_wakeup_alarm);
 
 static int alarmtimer_resume(struct device *dev)
 {

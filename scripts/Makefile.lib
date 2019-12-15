@@ -178,6 +178,7 @@ DTC_INCLUDE    := $(srctree)/scripts/dtc/include-prefixes
 
 dtc_cpp_flags  = -Wp,-MD,$(depfile).pre.tmp -nostdinc                    \
 		 $(addprefix -I,$(DTC_INCLUDE))                          \
+		 -I$(objtree)/include                          \
 		 -undef -D__DTS__
 
 # Finds the multi-part object the current object will be linked into

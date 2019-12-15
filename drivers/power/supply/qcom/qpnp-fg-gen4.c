@@ -652,6 +652,10 @@ static int fg_gen4_get_battery_temp(struct fg_dev *fg, int *val)
 	 * 0.25 C. Multiply by 10 to convert it to deci degrees C.
 	 */
 	*val = sign_extend32(buf, 9) * 100 / 40;
+	if (*val < 50)
+		*val = *val+10;
+	else if (*val > 450)
+		*val = *val+4;
 
 	return 0;
 }
@@ -3080,6 +3084,7 @@ static void pl_current_en_work(struct work_struct *work)
 		return;
 
 	vote(chip->parallel_current_en_votable, FG_PARALLEL_EN_VOTER, en, 0);
+	vote(chip->mem_attn_irq_en_votable, MEM_ATTN_IRQ_VOTER, false, 0);
 }
 
 static void pl_enable_work(struct work_struct *work)
@@ -3173,7 +3178,11 @@ static void status_change_work(struct work_struct *work)
 	if (rc < 0)
 		pr_err("Error in adjusting FCC for ESR, rc=%d\n", rc);
 
+	if (is_parallel_charger_available(fg) &&
+	 !delayed_work_pending(&chip->pl_current_en_work))
+
 	schedule_delayed_work(&chip->pl_current_en_work, 0);
+
 
 	ttf_update(chip->ttf, input_present);
 	fg->prev_charge_status = fg->charge_status;
@@ -3719,7 +3728,7 @@ static int fg_parallel_current_en_cb(struct votable *votable, void *data,
 
 	fg_dbg(fg, FG_STATUS, "Parallel current summing: %d\n", enable);
 
-	vote(chip->mem_attn_irq_en_votable, MEM_ATTN_IRQ_VOTER, false, 0);
+	//vote(chip->mem_attn_irq_en_votable, MEM_ATTN_IRQ_VOTER, false, 0);
 	return rc;
 }
 
@@ -4688,6 +4697,7 @@ static int fg_gen4_probe(struct platform_device *pdev)
 
 	fg = &chip->fg;
 	fg->dev = &pdev->dev;
+	fg_gen4_debug_mask = 0x187;
 	fg->debug_mask = &fg_gen4_debug_mask;
 	fg->irqs = fg_irqs;
 	fg->charge_status = -EINVAL;

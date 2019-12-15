@@ -162,8 +162,10 @@ static int cam_fd_mgr_util_put_frame_req(
 
 	mutex_lock(&g_fd_hw_mgr.frame_req_mutex);
 	req_ptr = *frame_req;
-	if (req_ptr)
+	if (req_ptr){
+		list_del_init(&req_ptr->list);
 		list_add_tail(&req_ptr->list, src_list);
+	}
 	*frame_req = NULL;
 	mutex_unlock(&g_fd_hw_mgr.frame_req_mutex);
 
@@ -1469,6 +1471,12 @@ unlock_dev_flush_ctx:
 			&flush_req);
 	}
 
+	for (i = 0; i < flush_args->num_req_active; i++) {
+		flush_req = (struct cam_fd_mgr_frame_request *)
+			flush_args->flush_req_active[i];
+		cam_fd_mgr_util_put_frame_req(&hw_mgr->frame_free_list,
+			&flush_req);
+	}
 	return rc;
 }
 

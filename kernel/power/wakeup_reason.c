@@ -29,6 +29,9 @@
 
 
 #define MAX_WAKEUP_REASON_IRQS 32
+
+extern void print_wakeup_alarm(void);
+
 static int irq_list[MAX_WAKEUP_REASON_IRQS];
 static int irqcount;
 static bool suspend_abort;
@@ -110,13 +113,25 @@ static struct attribute_group attr_group = {
  */
 void log_wakeup_reason(int irq)
 {
+	//struct timespec ts;
+	//struct tm bt;
 	struct irq_desc *desc;
+
+	//getnstimeofday(&ts);
+	//time_to_tm(ts.tv_sec, 0, &bt);
+
 	desc = irq_to_desc(irq);
-	if (desc && desc->action && desc->action->name)
-		printk(KERN_INFO "Resume caused by IRQ %d, %s\n", irq,
-				desc->action->name);
-	else
-		printk(KERN_INFO "Resume caused by IRQ %d\n", irq);
+
+	//printk(KERN_WARNING "[%s][%d:%d:%d]Resume caused by IRQ %d, %s\n", 
+	//		__func__,	bt.tm_hour, bt.tm_min, bt.tm_sec, 
+	//		irq, (desc && desc->action && desc->action->name)?desc->action->name:"null");
+
+	printk(KERN_WARNING "[%s]Resume caused by IRQ %d, %s\n", 
+			__func__,	 
+			irq, (desc && desc->action && desc->action->name)?desc->action->name:"null");
+
+	if(irq==553)//rtc wakeup
+    print_wakeup_alarm();
 
 	spin_lock(&resume_reason_lock);
 	if (irqcount == MAX_WAKEUP_REASON_IRQS) {

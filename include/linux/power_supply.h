@@ -20,6 +20,9 @@
 #include <linux/notifier.h>
 #include <linux/types.h>
 
+#define SUPPORT_BATTERY_AGE
+#define SUPPORT_USER_CHARGE_OP
+
 /*
  * All voltages, currents, charges, energies, time and temperatures in uV,
  * µA, µAh, µWh, seconds and tenths of degree Celsius unless otherwise
@@ -221,6 +224,12 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_CAPACITY_RAW,
 	POWER_SUPPLY_PROP_BATTERY_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_CHARGING_ENABLED,
+#ifdef SUPPORT_BATTERY_AGE
+	POWER_SUPPLY_PROP_AGE,
+#endif
+#ifdef SUPPORT_USER_CHARGE_OP
+	POWER_SUPPLY_PROP_USER_CHARGE_OP,
+#endif
 	POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_STEP_CHARGING_STEP,
 	POWER_SUPPLY_PROP_PIN_ENABLED,

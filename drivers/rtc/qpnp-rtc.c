@@ -302,6 +302,8 @@ qpnp_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 	}
 
 	rtc_tm_to_time(&rtc_tm, &secs_rtc);
+	pr_info("current time(utc) value:%lu, alarm time(utc) at:%lu, enable = %d\n",
+		secs_rtc, secs, alarm->enabled);
 	if (secs < secs_rtc) {
 		dev_err(dev, "Trying to set alarm in the past\n");
 		return -EINVAL;
@@ -334,7 +336,7 @@ qpnp_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alarm)
 	}
 
 	rtc_dd->alarm_ctrl_reg1 = ctrl_reg;
-
+	pr_info("%u, %s setting alarm", current->pid, current->comm);
 	dev_dbg(dev, "Alarm Set for h:r:s=%d:%d:%d, d/m/y=%d/%d/%d\n",
 			alarm->time.tm_hour, alarm->time.tm_min,
 			alarm->time.tm_sec, alarm->time.tm_mday,
@@ -410,6 +412,7 @@ qpnp_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
 
 	rtc_dd->alarm_ctrl_reg1 = ctrl_reg;
 
+	pr_info("%s, alarm irq = %d\n", __func__, enabled);
 	/* Clear Alarm register */
 	if (!enabled) {
 		rc = qpnp_write_wrapper(rtc_dd, value,
@@ -644,6 +647,47 @@ static int qpnp_rtc_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static int qpnp_rtc_invalid_alarm_time(struct device *dev)
+{
+	struct rtc_time tm;
+	struct rtc_wkalrm alarm;
+	unsigned long secs, secs_alarm;
+	struct qpnp_rtc *rtc_dd = dev_get_drvdata(dev);
+	int rc, alarm_enable = 0;
+
+	rc = qpnp_rtc_read_time(dev, &tm);
+	if (rc) {
+		dev_err(dev, "Read from RTC time failed\n");
+		return 0;
+	}
+
+	rc = qpnp_rtc_read_alarm(dev, &alarm);
+	if (rc) {
+		dev_err(dev, "Read from ALARM time failed\n");
+		return 0;
+	}
+
+	rtc_tm_to_time(&tm, &secs);
+	rtc_tm_to_time(&alarm.time, &secs_alarm);
+	pr_err("qpnp-rtc: secs = %lu, secs_alarm = %lu\n", secs, secs_alarm);
+
+	rc = qpnp_read_wrapper(rtc_dd, &rtc_dd->alarm_ctrl_reg1,
+				rtc_dd->alarm_base + REG_OFFSET_ALARM_CTRL1, 1);
+	if (rc) {
+		pr_info("qpnp-rtc: Read from  Alarm control reg failed\n");
+		return 0;
+	}
+	alarm_enable = (rtc_dd->alarm_ctrl_reg1 & BIT_RTC_ALARM_ENABLE) ? 1 : 0;
+	pr_err("qpnp-rtc: alarm enabled = %d\n", alarm_enable);
+
+	if (secs >= secs_alarm && alarm_enable) {
+		pr_err("qpnp-rtc: invalid rtc alarm, disable rtc\n");
+		return 1;
+	}
+
+	return 0;
+}
+
 static void qpnp_rtc_shutdown(struct platform_device *pdev)
 {
 	u8 value[4] = {0};
@@ -652,18 +696,21 @@ static void qpnp_rtc_shutdown(struct platform_device *pdev)
 	unsigned long irq_flags;
 	struct qpnp_rtc *rtc_dd;
 	bool rtc_alarm_powerup;
+	int invaild_alarm = 0;
 
 	if (!pdev) {
 		pr_err("qpnp-rtc: spmi device not found\n");
 		return;
 	}
+
 	rtc_dd = dev_get_drvdata(&pdev->dev);
 	if (!rtc_dd) {
 		pr_err("qpnp-rtc: rtc driver data not found\n");
 		return;
 	}
 	rtc_alarm_powerup = rtc_dd->rtc_alarm_powerup;
-	if (!rtc_alarm_powerup && !poweron_alarm) {
+	invaild_alarm = qpnp_rtc_invalid_alarm_time(&pdev->dev);
+	if ((!rtc_alarm_powerup && !poweron_alarm) || invaild_alarm) {
 		spin_lock_irqsave(&rtc_dd->alarm_ctrl_lock, irq_flags);
 		dev_dbg(&pdev->dev, "Disabling alarm interrupts\n");
 

@@ -47,6 +47,22 @@
 #define CAM_FLASH_PACKET_OPCODE_SET_OPS              1
 #define CAM_FLASH_PACKET_OPCODE_NON_REALTIME_SET_OPS 2
 
+#ifdef CONFIG_PRODUCT_HEART
+//LENOVO_CUSTOM turn i2c flash off by i2c register begin
+//#define DISABLE_I2C_FLASH_READ_REGISTER_CHECK								1
+#define CAM_I2C_FLASH_AW36423_CHIP_ID_REGISTER					0x00
+#define CAM_I2C_FLASH_AW36423_ENABLE_REGISTER					0x01
+#define CAM_I2C_FLASH_AW36423_IVFM_REGISTER						0x02
+#define CAM_I2C_FLASH_AW36423_LED1_FLASH_BRIGHTNESS_REGISTER	0x03
+#define CAM_I2C_FLASH_AW36423_LED1_TORCH_BRIGHTNESS_REGISTER	0x04
+#define CAM_I2C_FLASH_AW36423_LED2_FLASH_BRIGHTNESS_REGISTER	0x05
+#define CAM_I2C_FLASH_AW36423_LED2_TORCH_BRIGHTNESS_REGISTER	0x06
+#define CAM_I2C_FLASH_AW36423_FLASH_TORCH_TIMING_REGISTER		0x0B
+#define CAM_I2C_FLASH_AW36423_FLAGS_REGISTER					0x0F
+#define CAM_I2C_FLASH_AW36423_DEVICE_ID_REGISTER				0x10
+//LENOVO_CUSTOM turn i2c flash off by i2c register end
+#endif
+
 struct cam_flash_ctrl;
 
 enum cam_flash_switch_trigger_ops {
@@ -207,6 +223,9 @@ struct cam_flash_ctrl {
 	struct led_trigger           *torch_trigger[CAM_FLASH_MAX_LED_TRIGGERS];
 /* I2C related setting */
 	enum   cci_i2c_master_t             cci_i2c_master;
+#ifdef CONFIG_PRODUCT_HEART
+	enum   cci_device_num               cci_device;
+#endif
 	struct camera_io_master             io_master_info;
 	struct i2c_data_settings            i2c_data;
 	uint32_t                            last_flush_req;
@@ -227,5 +246,9 @@ int cam_flash_pmic_flush_request(struct cam_flash_ctrl *fctrl,
 	enum cam_flash_flush_type, uint64_t req_id);
 void cam_flash_shutdown(struct cam_flash_ctrl *fctrl);
 int cam_flash_release_dev(struct cam_flash_ctrl *fctrl);
-
+#ifdef CONFIG_PRODUCT_HEART
+//LENOVO_CUSTOM turn i2c flash off by i2c register begin
+int msm_camera_i2c_flash_off(struct cam_flash_ctrl *fctrl);
+//LENOVO_CUSTOM turn i2c flash off by i2c register end
+#endif
 #endif /*_CAM_FLASH_DEV_H_*/

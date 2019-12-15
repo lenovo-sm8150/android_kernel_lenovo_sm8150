@@ -27,6 +27,7 @@
 #include <dt-bindings/soc/qcom,dcc_v2.h>
 #include <dt-bindings/msm/msm-bus-ids.h>
 #include <dt-bindings/spmi/spmi.h>
+#include <generated/autoconf.h>
 
 #define MHZ_TO_MBPS(mhz, w) ((mhz * 1000000 * w) / (1024 * 1024))
 #define BW_OPP_ENTRY(mhz, w) opp-mhz {opp-hz = /bits/ 64 <MHZ_TO_MBPS(mhz, w)>;}
@@ -574,18 +575,20 @@
 	firmware: firmware {
 		android {
 			compatible = "android,firmware";
+
 			vbmeta {
 				compatible = "android,vbmeta";
-				parts = "vbmeta,boot,system,vendor,dtbo,vm-linux";
+				parts = "vbmeta,recovery,boot,system,vendor,dtbo,vm-linux";
 			};
+
 			fstab {
 				compatible = "android,fstab";
 				vendor {
 					compatible = "android,vendor";
-					dev = "/dev/block/platform/soc/8804000.sdhci/by-name/vendor";
+					dev = "/dev/block/platform/soc/1d84000.ufshc/by-name/vendor";
 					type = "ext4";
 					mnt_flags = "ro,barrier=1,discard";
-					fsmgr_flags = "wait,slotselect,avb";
+					fsmgr_flags = "wait,avb";
 					status = "ok";
 				};
 				vm-linux {
@@ -646,55 +649,55 @@
 		pil_adsp_mem: pil_adsp_region@8be00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x8be00000 0x0 0x1a00000>;
+			reg = <0x0 0x8be00000 0x0 0x1e00000>;
 		};
 
-		pil_modem_mem: modem_region@8d800000 {
+		pil_modem_mem: modem_region@8dc00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x8d800000 0x0 0x9600000>;
+			reg = <0x0 0x8dc00000 0x0 0x9600000>;
 		};
 
-		pil_video_mem: pil_video_region@96e00000 {
+		pil_video_mem: pil_video_region@97200000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x96e00000 0x0 0x500000>;
+			reg = <0x0 0x97200000 0x0 0x500000>;
 		};
 
-		pil_slpi_mem: pil_slpi_region@97300000 {
+		pil_slpi_mem: pil_slpi_region@97700000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x97300000 0x0 0x1400000>;
+			reg = <0x0 0x97700000 0x0 0x1400000>;
 		};
 
-		pil_ipa_fw_mem: pil_ipa_fw_region@98700000 {
+		pil_ipa_fw_mem: pil_ipa_fw_region@98b00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x98700000 0x0 0x10000>;
+			reg = <0x0 0x98b00000 0x0 0x10000>;
 		};
 
-		pil_ipa_gsi_mem: pil_ipa_gsi_region@98710000 {
+		pil_ipa_gsi_mem: pil_ipa_gsi_region@98b10000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x98710000 0x0 0x5000>;
+			reg = <0x0 0x98b10000 0x0 0x5000>;
 		};
 
-		pil_gpu_mem: pil_gpu_region@98715000 {
+		pil_gpu_mem: pil_gpu_region@98b15000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x98715000 0x0 0x2000>;
+			reg = <0x0 0x98b15000 0x0 0x2000>;
 		};
 
-		pil_spss_mem: pil_spss_region@98800000 {
+		pil_spss_mem: pil_spss_region@98c00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x98800000 0x0 0x100000>;
+			reg = <0x0 0x98c00000 0x0 0x100000>;
 		};
 
-		pil_cdsp_mem: cdsp_regions@98900000 {
+		pil_cdsp_mem: cdsp_regions@98d00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0x0 0x98900000 0x0 0x1400000>;
+			reg = <0x0 0x98d00000 0x0 0x1400000>;
 		};
 
 		qseecom_mem: qseecom_region@0x9e400000 {
@@ -707,6 +710,11 @@
 			compatible = "removed-dma-pool";
 			no-map;
 			reg = <0x0 0xa4c00000 0x0 0x3c00000>;
+		};
+
+		pstore_mem: pstore_region@0xaff00000 {
+			compatible = "removed-dma-pool";
+			reg = <0 0xaff00000 0 0x100000>;
 		};
 
 		cont_splash_memory: cont_splash_region@9c000000 {
@@ -2323,7 +2331,7 @@
 			<0 0>;
 
 		qcom,msm-bus,name = "ufshc_mem";
-		qcom,msm-bus,num-cases = <22>;
+		qcom,msm-bus,num-cases = <26>;
 		qcom,msm-bus,num-paths = <2>;
 		qcom,msm-bus,vectors-KBps =
 		/*
@@ -2348,12 +2356,15 @@
 		<123 512 127796 0>, <1 757 1000 0>,  /* HS G1 RA */
 		<123 512 255591 0>, <1 757 1000 0>,  /* HS G2 RA */
 		<123 512 2097152 0>, <1 757 102400 0>,  /* HS G3 RA */
+		<123 512 4194304 0>, <1 757 204800 0>,  /* HS G4 RA */
 		<123 512 255591 0>, <1 757 1000 0>,  /* HS G1 RA L2 */
 		<123 512 511181 0>, <1 757 1000 0>,  /* HS G2 RA L2 */
 		<123 512 4194304 0>, <1 757 204800 0>, /* HS G3 RA L2 */
+		<123 512 8388608 0>, <1 757 409600 0>, /* HS G4 RA L2 */
 		<123 512 149422 0>, <1 757 1000 0>,  /* HS G1 RB */
 		<123 512 298189 0>, <1 757 1000 0>,  /* HS G2 RB */
 		<123 512 2097152 0>, <1 757 102400 0>,  /* HS G3 RB */
+		<123 512 4194304 0>, <1 757 204800 0>,  /* HS G4 RB */
 		<123 512 298189 0>, <1 757 1000 0>,  /* HS G1 RB L2 */
 		<123 512 596378 0>, <1 757 1000 0>,  /* HS G2 RB L2 */
 		/* As UFS working in HS G3 RB L2 mode, aggregated
@@ -2363,15 +2374,16 @@
 		 * bindwidth (IB) needs to be given a proper value too.
 		 */
 		<123 512 4194304 0>, <1 757 204800 409600>, /* HS G3 RB L2 */
+		<123 512 8388608 0>, <1 757 409600 409600>, /* HS G4 RB L2 */
 		<123 512 7643136 0>, <1 757 307200 0>; /* Max. bandwidth */
 
 		qcom,bus-vector-names = "MIN",
 		"PWM_G1_L1", "PWM_G2_L1", "PWM_G3_L1", "PWM_G4_L1",
 		"PWM_G1_L2", "PWM_G2_L2", "PWM_G3_L2", "PWM_G4_L2",
-		"HS_RA_G1_L1", "HS_RA_G2_L1", "HS_RA_G3_L1",
-		"HS_RA_G1_L2", "HS_RA_G2_L2", "HS_RA_G3_L2",
-		"HS_RB_G1_L1", "HS_RB_G2_L1", "HS_RB_G3_L1",
-		"HS_RB_G1_L2", "HS_RB_G2_L2", "HS_RB_G3_L2",
+		"HS_RA_G1_L1", "HS_RA_G2_L1", "HS_RA_G3_L1", "HS_RA_G4_L1",
+		"HS_RA_G1_L2", "HS_RA_G2_L2", "HS_RA_G3_L2", "HS_RA_G4_L2",
+		"HS_RB_G1_L1", "HS_RB_G2_L1", "HS_RB_G3_L1", "HS_RB_G4_L1",
+		"HS_RB_G1_L2", "HS_RB_G2_L2", "HS_RB_G3_L2", "HS_RB_G4_L2",
 		"MAX";
 
 		/* PM QoS */
@@ -2986,7 +2998,7 @@
 
 	qcom_seecom: qseecom@87900000 {
 		compatible = "qcom,qseecom";
-		reg = <0x87900000 0x2200000>;
+		reg = <0x87900000 0x3E00000>;
 		reg-names = "secapp-region";
 		memory-region = <&qseecom_mem>;
 		qcom,hlos-num-ce-hw-instances = <1>;
@@ -3003,7 +3015,7 @@
 
 	qcom_smcinvoke: smcinvoke@87900000 {
 		compatible = "qcom,smcinvoke";
-		reg = <0x87900000 0x2200000>;
+		reg = <0x87900000 0x3E00000>;
 		reg-names = "secapp-region";
 	};
 
@@ -4123,6 +4135,11 @@
 };
 #include "sm8150-pinctrl.dtsi"
 #include "sm8150-slpi-pinctrl.dtsi"
+#ifdef CONFIG_PRODUCT_HEART
+#include "lenovo-heart-pinctrl.dtsi"
+#elif defined(CONFIG_PRODUCT_ZIPPO)
+#include "lenovo-zippo-pinctrl.dtsi"
+#endif
 #include "sm8150-regulator.dtsi"
 #include "sm8150-ion.dtsi"
 #include "sm8150-bus.dtsi"

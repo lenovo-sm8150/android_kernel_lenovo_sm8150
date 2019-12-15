@@ -168,7 +168,8 @@ struct sde_connector_ops {
 	 */
 	int (*set_backlight)(struct drm_connector *connector,
 			void *display, u32 bl_lvl);
-
+	int (*set_backlight_hbm)(struct drm_connector *connector,
+			void *display, u32 bl_lvl);
 	/**
 	 * soft_reset - perform a soft reset on the connector
 	 * @display: Pointer to private display structure
@@ -240,6 +241,8 @@ struct sde_connector_ops {
 	 * Returns: positive value for success, negetive or zero for failure
 	 */
 	int (*check_status)(struct drm_connector *connector, void *display,
+					bool te_check_override);
+	int (*read_elvss_volt)(struct drm_connector *connector, void *display,
 					bool te_check_override);
 
 	/**
@@ -415,7 +418,9 @@ struct sde_connector {
 	spinlock_t event_lock;
 
 	struct backlight_device *bl_device;
+	struct backlight_device *bl_hdm;
 	struct delayed_work status_work;
+	struct delayed_work read_elvss_work;
 	u32 esd_status_interval;
 	bool panel_dead;
 	bool esd_status_check;
@@ -817,6 +822,8 @@ int sde_connector_roi_v1_check_roi(struct drm_connector_state *conn_state);
  * @en: flag to start/stop ESD thread
  */
 void sde_connector_schedule_status_work(struct drm_connector *conn, bool en);
+
+void sde_connector_schedule_read_elvss_work(struct drm_connector *conn, bool en);
 
 /**
  * sde_connector_helper_reset_properties - reset properties to default values in

@@ -4860,6 +4860,11 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	/* Enable ESD thread */
 	for (i = 0; i < cstate->num_connectors; i++)
 		sde_connector_schedule_status_work(cstate->connectors[i], true);
+	/* Enable READ ELVSS Voltage thread */
+#ifdef CONFIG_DRM_SDE_ELVSS_DIM_OFF
+	for (i = 0; i < cstate->num_connectors; i++)
+		sde_connector_schedule_read_elvss_work(cstate->connectors[i], true);
+#endif
 }
 
 /* no input validation - caller API has all the checks */

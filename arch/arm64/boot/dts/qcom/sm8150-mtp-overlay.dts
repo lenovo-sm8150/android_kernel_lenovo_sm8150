@@ -20,6 +20,11 @@
 
 #include "sm8150-mtp.dtsi"
 #include "sm8150-mtp-audio-overlay.dtsi"
+#ifdef CONFIG_PRODUCT_HEART
+#include "lenovo-heart.dtsi"
+#elif defined(CONFIG_PRODUCT_ZIPPO)
+#include "lenovo-zippo.dtsi"
+#endif
 
 / {
 	model = "MTP";
@@ -27,6 +32,7 @@
 	qcom,board-id = <8 0>;
 };
 
-&dsi_sharp_4k_dsc_cmd_display {
+/*&dsi_sharp_4k_dsc_cmd_display { */
+&dsi_smd639_amoled_fhd_cmd_display {
 	qcom,dsi-display-active;
 };

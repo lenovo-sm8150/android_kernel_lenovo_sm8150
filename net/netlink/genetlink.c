@@ -22,6 +22,8 @@
 #include <net/sock.h>
 #include <net/genetlink.h>
 
+#define GENL_ID_TLV 0x71 /* ZUIO-25522, yangwj12, add static id for tlv family */
+
 static DEFINE_MUTEX(genl_mutex); /* serialization of message processing */
 static DECLARE_RWSEM(cb_lock);
 
@@ -349,7 +351,11 @@ int genl_register_family(struct genl_family *family)
 		start = end = GENL_ID_PMCRAID;
 	} else if (strcmp(family->name, "VFS_DQUOT") == 0) {
 		start = end = GENL_ID_VFS_DQUOT;
+	/* BEGIN ZUIO-25522, yangwj12, add static id for tlv family */
+	} else if (strcmp(family->name, "tlv") == 0) {
+		start = end = GENL_ID_TLV;
 	}
+	/* END ZUIO-25522 */
 
 	if (family->maxattr && !family->parallel_ops) {
 		family->attrbuf = kmalloc((family->maxattr+1) *

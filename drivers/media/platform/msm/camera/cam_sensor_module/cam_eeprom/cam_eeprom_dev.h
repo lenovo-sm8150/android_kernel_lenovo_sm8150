@@ -37,6 +37,11 @@
 #define MSM_EEPROM_MAX_MEM_MAP_CNT             8
 #define MSM_EEPROM_MEM_MAP_PROPERTIES_CNT      8
 
+#if defined(CONFIG_PRODUCT_HEART) || defined(CONFIG_PRODUCT_ZIPPO)
+#define __EEPROM_RW_IF__
+#define __EEPROM_RW_POWER_BY_KERNEL__ 0
+#endif
+
 enum cam_eeprom_state {
 	CAM_EEPROM_INIT,
 	CAM_EEPROM_ACQUIRE,

@@ -12,6 +12,8 @@
 
 #include <dt-bindings/thermal/thermal.h>
 
+//#define ENABLE_QCOM_COMMON_THERMAL
+
 &clock_cpucc {
 	#address-cells = <1>;
 	#size-cells = <1>;
@@ -507,6 +509,7 @@
 			};
 		};
 		cooling-maps {
+#ifdef ENABLE_QCOM_COMMON_THERMAL /* cpu-1-7-lowf */
 			cpu0_cdev {
 				trip = <&cpu17_trip>;
 				cooling-device = <&CPU0 1 1>;
@@ -552,6 +555,7 @@
 				cooling-device = <&msm_gpu (THERMAL_MAX_LIMIT-2)
 							(THERMAL_MAX_LIMIT-2)>;
 			};
+#endif
 		};
 	};
 
@@ -569,6 +573,7 @@
 			};
 		};
 		cooling-maps {
+#ifdef ENABLE_QCOM_COMMON_THERMAL /* gpuss-0--lowf */
 			cpu0_cdev {
 				trip = <&gpuss0_trip>;
 				cooling-device = <&CPU0 1 1>;
@@ -614,6 +619,7 @@
 				cooling-device = <&msm_gpu (THERMAL_MAX_LIMIT-2)
 							(THERMAL_MAX_LIMIT-2)>;
 			};
+#endif
 		};
 	};
 
@@ -631,6 +637,7 @@
 			};
 		};
 		cooling-maps {
+#ifdef ENABLE_QCOM_COMMON_THERMAL /* camera--lowf */
 			cpu0_cdev {
 				trip = <&camera_trip>;
 				cooling-device = <&CPU0 1 1>;
@@ -676,6 +683,7 @@
 				cooling-device = <&msm_gpu (THERMAL_MAX_LIMIT-2)
 							(THERMAL_MAX_LIMIT-2)>;
 			};
+#endif
 		};
 	};
 
@@ -693,6 +701,7 @@
 			};
 		};
 		cooling-maps {
+#ifdef ENABLE_QCOM_COMMON_THERMAL /* mdm-scl--lowf */
 			cpu0_cdev {
 				trip = <&mdms_trip>;
 				cooling-device = <&CPU0 1 1>;
@@ -738,6 +747,7 @@
 				cooling-device = <&msm_gpu (THERMAL_MAX_LIMIT-2)
 							(THERMAL_MAX_LIMIT-2)>;
 			};
+#endif
 		};
 	};
 

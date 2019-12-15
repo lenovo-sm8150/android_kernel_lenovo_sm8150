@@ -22,6 +22,14 @@
 #include <linux/extcon.h>
 #include "storm-watch.h"
 
+#define CONFIG_COMMON_PRODUCT_SDM855
+#define SUPPORT_BATTERY_AGE
+#define SUPPORT_USER_CHARGE_OP
+
+#ifdef CONFIG_COMMON_PRODUCT_SDM855
+#define ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+#endif
+
 enum print_reason {
 	PR_INTERRUPT	= BIT(0),
 	PR_REGISTER	= BIT(1),
@@ -30,6 +38,10 @@ enum print_reason {
 	PR_OTG		= BIT(4),
 	PR_WLS		= BIT(5),
 };
+
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+#define DISABLE_CHARGER                 "DISABLE_CHARGER"
+#endif
 
 #define DEFAULT_VOTER			"DEFAULT_VOTER"
 #define USER_VOTER			"USER_VOTER"
@@ -48,6 +60,9 @@ enum print_reason {
 #define DEBUG_BOARD_VOTER		"DEBUG_BOARD_VOTER"
 #define PD_SUSPEND_SUPPORTED_VOTER	"PD_SUSPEND_SUPPORTED_VOTER"
 #define PL_DELAY_VOTER			"PL_DELAY_VOTER"
+#ifdef SUPPORT_USER_CHARGE_OP
+#define FCC_USER_CHARGE_OP_VOTER	"FCC_USER_CHARGE_OP_VOTER"
+#endif
 #define CTM_VOTER			"CTM_VOTER"
 #define SW_QC3_VOTER			"SW_QC3_VOTER"
 #define AICL_RERUN_VOTER		"AICL_RERUN_VOTER"
@@ -422,6 +437,9 @@ struct smb_charger {
 	int			dcp_icl_ua;
 	int			fake_capacity;
 	int			fake_batt_status;
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+	bool                    chg_enabled;
+#endif
 	bool			step_chg_enabled;
 	bool			sw_jeita_enabled;
 	bool			is_hdc;
@@ -677,6 +695,10 @@ enum alarmtimer_restart smblib_lpd_recheck_timer(struct alarm *alarm,
 int smblib_toggle_smb_en(struct smb_charger *chg, int toggle);
 void smblib_hvdcp_detect_enable(struct smb_charger *chg, bool enable);
 void smblib_apsd_enable(struct smb_charger *chg, bool enable);
+#ifdef SUPPORT_BATTERY_AGE
+int smblib_get_prop_batt_age(struct smb_charger *chg,
+			     union power_supply_propval *val);
+#endif
 
 int smblib_init(struct smb_charger *chg);
 int smblib_deinit(struct smb_charger *chg);

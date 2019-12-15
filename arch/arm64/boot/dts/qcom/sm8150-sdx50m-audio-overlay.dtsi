@@ -16,3 +16,9 @@
 &snd_934x {
 	qcom,msm-mbhc-usbc-audio-supported = <1>;
 };
+
+#ifdef CONFIG_PRODUCT_HEART
+&snd_madera {
+	qcom,msm-mbhc-usbc-audio-supported = <1>;
+};
+#endif

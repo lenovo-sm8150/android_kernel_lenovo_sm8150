@@ -56,9 +56,41 @@
 			power-source = <1>;	/* 1.8V input supply */
 		};
 	};
+	#ifdef CONFIG_PRODUCT_HEART
+	madera_rtc_mclk2{
+	        madera_rtc_mclk2_enable:madera_rtc_mclk2_enable{
+	               pins = "gpio3";
+		       function = "func1";
+		       bias-disable;
+		       power-source = <0>;
+		       output-low;
+	       };
+                madera_rtc_mclk2_disable:madera_rtc_mclk2_disable{
+	               pins = "gpio3";
+		       function = "normal";
+		       power-source = <0>;
+		       bias-high-impedance;
+	       };
+	};
+	#endif
 };
 
 &pm8150l_gpios {
+#ifdef CONFIG_PRODUCT_HEART
+    cam_sensor_rear_dvdd_en_active: cam_sensor_rear_dvdd_en_active {
+        pins = "gpio3";
+        function = "normal";
+        power-source = <0>;
+        output-high;
+    };
+
+    cam_sensor_rear_dvdd_en_suspend: cam_sensor_rear_dvdd_en_suspend {
+        pins = "gpio3";
+        function = "normal";
+        power-source = <0>;
+        output-low;
+    };
+#else
 	cam_sensor_eldo4 {
 		cam_sensor_eldo4_default: cam_sensor_eldo4_default {
 			pins = "gpio3";
@@ -76,6 +108,7 @@
 			output-low;
 		};
 	};
+#endif
 };
 
 &pm8150b_charger {

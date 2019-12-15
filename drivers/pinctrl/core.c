@@ -1416,6 +1416,7 @@ int pinctrl_register_mappings(const struct pinctrl_map *maps,
 {
 	return pinctrl_register_map(maps, num_maps, true);
 }
+EXPORT_SYMBOL_GPL(pinctrl_register_mappings);
 
 void pinctrl_unregister_map(const struct pinctrl_map *map)
 {
@@ -1432,6 +1433,7 @@ void pinctrl_unregister_map(const struct pinctrl_map *map)
 	}
 	mutex_unlock(&pinctrl_maps_mutex);
 }
+EXPORT_SYMBOL_GPL(pinctrl_unregister_map);
 
 /**
  * pinctrl_force_sleep() - turn a given controller device into sleep state

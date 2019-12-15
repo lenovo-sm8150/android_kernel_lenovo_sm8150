@@ -26,6 +26,12 @@
 #include "step-chg-jeita.h"
 #include "storm-watch.h"
 
+#include <linux/wakelock.h>
+
+#define CTRL_SMB_LOG_FOR_LENOVO
+#define SUPPORT_FLOAT_CHRGER_FOR_LENOVO
+#define SUPPORT_BATTERY_AGE
+
 #define smblib_err(chg, fmt, ...)		\
 	pr_err("%s: %s: " fmt, chg->name,	\
 		__func__, ##__VA_ARGS__)	\
@@ -44,6 +50,21 @@
 	((typec_mode == POWER_SUPPLY_TYPEC_SOURCE_MEDIUM	\
 	|| typec_mode == POWER_SUPPLY_TYPEC_SOURCE_HIGH)	\
 	&& !chg->typec_legacy)
+
+
+struct wake_lock lenovo_chg_lock;
+void lenovo_smblib_stay_awake(void)
+{
+	pr_info("set smblib_stay_awake\n");
+	wake_lock(&lenovo_chg_lock);
+}
+
+void lenovo_smblib_relax(void)
+{
+	pr_info("set smblib_relax\n");
+	wake_unlock(&lenovo_chg_lock);
+}
+
 
 static void update_sw_icl_max(struct smb_charger *chg, int pst);
 
@@ -1680,6 +1701,39 @@ static bool is_charging_paused(struct smb_charger *chg)
 
 	return val & CHARGING_PAUSE_CMD_BIT;
 }
+
+#ifdef SUPPORT_BATTERY_AGE
+int smblib_get_prop_batt_age(struct smb_charger *chg,
+			     union power_supply_propval *val)
+{
+	int age;
+	int rc = -EINVAL;
+	union power_supply_propval pval = {0, };
+
+	if (chg->bms_psy) {
+		rc = power_supply_get_property(chg->bms_psy,
+				POWER_SUPPLY_PROP_CHARGE_FULL, &pval);
+		if (rc < 0) {
+			smblib_err(chg, "Fail: get charge full rc=%d\n",
+				   rc);
+			return rc;
+		}
+
+		age = pval.intval * 100;
+
+		rc = power_supply_get_property(chg->bms_psy,
+				POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN, &pval);
+		if (rc < 0) {
+			smblib_err(chg, "Fail: get chrg full design rc=%d\n",
+				   rc);
+			return rc;
+		}
+
+		val->intval = age / pval.intval;
+	}
+	return rc;
+}
+#endif
 
 int smblib_get_prop_batt_status(struct smb_charger *chg,
 				union power_supply_propval *val)
@@ -3409,11 +3463,14 @@ int smblib_get_prop_connector_health(struct smb_charger *chg)
 
 #define SDP_CURRENT_UA			500000
 #define CDP_CURRENT_UA			1500000
-#define DCP_CURRENT_UA			1500000
+#define DCP_CURRENT_UA			2500000
 #define HVDCP_CURRENT_UA		3000000
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
 #define TYPEC_HIGH_CURRENT_UA		3000000
+#ifdef SUPPORT_FLOAT_CHRGER_FOR_LENOVO
+#define FLOAT_CURRENT_UA 		500000
+#endif
 static int get_rp_based_dcp_current(struct smb_charger *chg, int typec_mode)
 {
 	int rp_ua;
@@ -3493,12 +3550,19 @@ static int smblib_handle_usb_current(struct smb_charger *chg,
 		} else {
 			/*
 			 * FLOAT charger detected as SDP by USB driver,
-			 * charge with the requested current and update the
-			 * real_charger_type
+			 * charge with the requested current 500mA
+			 * but don't update the real_charger_type
+			 * use real_charger_type
 			 */
+#ifdef SUPPORT_FLOAT_CHRGER_FOR_LENOVO
+			rc = vote(chg->usb_icl_votable, USB_PSY_VOTER,
+                                                true, FLOAT_CURRENT_UA);
+			pr_info("power_supply real type is USB_FLOAT\n");
+#else
 			chg->real_charger_type = POWER_SUPPLY_TYPE_USB;
 			rc = vote(chg->usb_icl_votable, USB_PSY_VOTER,
 						true, usb_current);
+#endif
 			if (rc < 0)
 				return rc;
 			rc = vote(chg->usb_icl_votable, SW_ICL_MAX_VOTER,
@@ -3525,6 +3589,7 @@ static int smblib_handle_usb_current(struct smb_charger *chg,
 	return 0;
 }
 
+#define USB_ENUMERATE_MAX_CURR_THR_UA 100000
 int smblib_set_prop_sdp_current_max(struct smb_charger *chg,
 				    const union power_supply_propval *val)
 {
@@ -3540,7 +3605,7 @@ int smblib_set_prop_sdp_current_max(struct smb_charger *chg,
 		}
 
 		/* handle the request only when USB is present */
-		if (pval.intval)
+		if (pval.intval && (val->intval >= USB_ENUMERATE_MAX_CURR_THR_UA))
 			rc = smblib_handle_usb_current(chg, val->intval);
 	} else if (chg->system_suspend_supported) {
 		if (val->intval <= USBIN_25MA)
@@ -4374,12 +4439,29 @@ void smblib_usb_plugin_locked(struct smb_charger *chg)
 		smblib_update_usb_type(chg);
 	}
 
+	if (vbus_rising)	//plug in USB or Adaptor
+	{
+		lenovo_smblib_stay_awake();
+		pr_info("plug in USB\n");
+	}
+	else		//plug out USB or Adaptor
+	{
+		lenovo_smblib_relax();
+		pr_info("plug out USB\n");
+	}
+
+
 	if (chg->connector_type == POWER_SUPPLY_CONNECTOR_MICRO_USB)
 		smblib_micro_usb_plugin(chg, vbus_rising);
 
 	power_supply_changed(chg->usb_psy);
+#ifndef CTRL_SMB_LOG_FOR_LENOVO
 	smblib_dbg(chg, PR_INTERRUPT, "IRQ: usbin-plugin %s\n",
 					vbus_rising ? "attached" : "detached");
+#else
+	pr_info("smblib_usb_plugin_locked IRQ: usbin-plugin %s\n",
+					vbus_rising ? "attached" : "detached");
+#endif
 }
 
 irqreturn_t usb_plugin_irq_handler(int irq, void *data)
@@ -4387,10 +4469,21 @@ irqreturn_t usb_plugin_irq_handler(int irq, void *data)
 	struct smb_irq_data *irq_data = data;
 	struct smb_charger *chg = irq_data->parent_data;
 
+#ifndef CTRL_SMB_LOG_FOR_LENOVO
 	if (chg->pd_hard_reset)
 		smblib_usb_plugin_hard_reset_locked(chg);
 	else
 		smblib_usb_plugin_locked(chg);
+#else
+	if (chg->pd_hard_reset){
+		smblib_usb_plugin_hard_reset_locked(chg);
+		pr_info("usb_plugin_irq_handler:pd_hard_reset is TRUE\n");
+	}
+        else{
+		smblib_usb_plugin_locked(chg);
+		pr_info("usb_plugin_irq_handler:triger\n");
+	}
+#endif
 
 	return IRQ_HANDLED;
 }
@@ -4398,15 +4491,27 @@ irqreturn_t usb_plugin_irq_handler(int irq, void *data)
 static void smblib_handle_slow_plugin_timeout(struct smb_charger *chg,
 					      bool rising)
 {
+#ifndef CTRL_SMB_LOG_FOR_LENOVO
 	smblib_dbg(chg, PR_INTERRUPT, "IRQ: slow-plugin-timeout %s\n",
 		   rising ? "rising" : "falling");
+#else
+	pr_info("smblib_handle_slow_plugin_timeout:IRQ: slow-plugin-timeout %s\n",
+		   rising ? "rising" : "falling");
+#endif
 }
 
 static void smblib_handle_sdp_enumeration_done(struct smb_charger *chg,
 					       bool rising)
 {
+#ifndef CTRL_SMB_LOG_FOR_LENOVO
 	smblib_dbg(chg, PR_INTERRUPT, "IRQ: sdp-enumeration-done %s\n",
 		   rising ? "rising" : "falling");
+#else
+	pr_info("smblib_handle_sdp_enumeration_done:IRQ: sdp-enumeration-done %s\n",
+		   rising ? "rising" : "falling");
+
+#endif
+
 }
 
 /* triggers when HVDCP 3.0 authentication has finished */
@@ -4463,8 +4568,13 @@ static void smblib_handle_hvdcp_check_timeout(struct smb_charger *chg,
 static void smblib_handle_hvdcp_detect_done(struct smb_charger *chg,
 					    bool rising)
 {
+#ifndef CTRL_SMB_LOG_FOR_LENOVO
 	smblib_dbg(chg, PR_INTERRUPT, "IRQ: hvdcp-detect-done %s\n",
 		   rising ? "rising" : "falling");
+#else
+	pr_info("smblib_handle_hvdcp_detect_done:IRQ: hvdcp-detect-done %s\n",
+		   rising ? "rising" : "falling");
+#endif
 }
 
 static void update_sw_icl_max(struct smb_charger *chg, int pst)
@@ -4536,6 +4646,8 @@ static void smblib_handle_apsd_done(struct smb_charger *chg, bool rising)
 		return;
 
 	apsd_result = smblib_update_usb_type(chg);
+
+	pr_info("APSD = %s,real charge type is %d\n",apsd_result->name,chg->real_charger_type);
 
 	update_sw_icl_max(chg, apsd_result->pst);
 
@@ -6044,6 +6156,8 @@ int smblib_init(struct smb_charger *chg)
 			return -ENODEV;
 		}
 	}
+
+	wake_lock_init(&lenovo_chg_lock, WAKE_LOCK_SUSPEND, "lenovo_chg_lock");
 
 	if (chg->uusb_moisture_protection_enabled) {
 		INIT_WORK(&chg->moisture_protection_work,

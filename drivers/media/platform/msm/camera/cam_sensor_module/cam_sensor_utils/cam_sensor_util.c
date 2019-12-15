@@ -14,6 +14,12 @@
 #include "cam_sensor_util.h"
 #include <cam_mem_mgr.h>
 #include "cam_res_mgr_api.h"
+#ifdef CONFIG_PRODUCT_HEART
+#include "cam_power_dev.h"
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+#include "cam_power_dev.h"
+#endif
 
 #define CAM_SENSOR_PINCTRL_STATE_SLEEP "cam_suspend"
 #define CAM_SENSOR_PINCTRL_STATE_DEFAULT "cam_default"
@@ -536,7 +542,7 @@ int32_t msm_camera_fill_vreg_params(
 
 	num_vreg = soc_info->num_rgltr;
 
-	if ((num_vreg <= 0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {
+	if ((num_vreg </*= */0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {   //LENOVO CHANGED FOR no vreg for actuator
 		CAM_ERR(CAM_SENSOR, "failed: num_vreg %d", num_vreg);
 		return -EINVAL;
 	}
@@ -1370,8 +1376,8 @@ int msm_cam_sensor_handle_reg_gpio(int seq_type,
 	gpio_offset = seq_type;
 
 	if (gpio_num_info->valid[gpio_offset] == 1) {
-		CAM_DBG(CAM_SENSOR, "VALID GPIO offset: %d, seqtype: %d",
-			 gpio_offset, seq_type);
+		CAM_DBG(CAM_SENSOR, "gpio_num = %d VALID GPIO offset: %d, seqtype: %d",
+			 gpio_num_info->gpio_num[gpio_offset], gpio_offset, seq_type);
 		cam_res_mgr_gpio_set_value(
 			gpio_num_info->gpio_num
 			[gpio_offset], val);
@@ -1449,7 +1455,7 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 	gpio_num_info = ctrl->gpio_num_info;
 	num_vreg = soc_info->num_rgltr;
 
-	if ((num_vreg <= 0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {
+	if ((num_vreg </*=*/ 0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {  //LENOVO CHANGED FOR ACTUATOR NO REG
 		CAM_ERR(CAM_SENSOR, "failed: num_vreg %d", num_vreg);
 		return -EINVAL;
 	}
@@ -1593,6 +1599,21 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 					"Error in handling VREG GPIO");
 				goto power_up_failed;
 			}
+#ifdef CONFIG_PRODUCT_HEART
+			if(power_setting->seq_type == SENSOR_CUSTOM_GPIO1 ||
+				power_setting->seq_type == SENSOR_CUSTOM_GPIO2) {
+				rc = cam_power_ldo_control(soc_info->index, true);
+				if (rc < 0)
+					CAM_ERR(CAM_SENSOR, "wl set cam%d vol failed: rc: %d", soc_info->index, rc);
+			}
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+			if(power_setting->seq_type == SENSOR_CUSTOM_GPIO1) {
+				rc = cam_power_ldo_control(soc_info->index, true);
+				if (rc < 0)
+					CAM_ERR(CAM_SENSOR, "wl set cam%d vol failed: rc: %d", soc_info->index, rc);
+			}
+#endif
 			break;
 		case SENSOR_VANA:
 		case SENSOR_VDIG:
@@ -1601,6 +1622,168 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 		case SENSOR_VAF_PWDM:
 		case SENSOR_CUSTOM_REG1:
 		case SENSOR_CUSTOM_REG2:
+#ifdef CONFIG_PRODUCT_HEART
+			if (power_setting->seq_val != INVALID_VREG)
+			{
+				if (power_setting->seq_val >= CAM_VREG_MAX) {
+					CAM_ERR(CAM_SENSOR, "vreg index %d >= max %d",
+						power_setting->seq_val,
+						CAM_VREG_MAX);
+					goto power_up_failed;
+				}
+				if (power_setting->seq_val < num_vreg) {
+					CAM_DBG(CAM_SENSOR, "Enable Regulator");
+					vreg_idx = power_setting->seq_val;
+
+					soc_info->rgltr[vreg_idx] =
+						regulator_get(soc_info->dev,
+							soc_info->rgltr_name[vreg_idx]);
+					if (IS_ERR_OR_NULL(
+						soc_info->rgltr[vreg_idx])) {
+						rc = PTR_ERR(soc_info->rgltr[vreg_idx]);
+						rc = rc ? rc : -EINVAL;
+
+						CAM_ERR(CAM_SENSOR, "%s get failed %d",
+							soc_info->rgltr_name[vreg_idx],
+							rc);
+
+						soc_info->rgltr[vreg_idx] = NULL;
+						goto power_up_failed;
+					}
+
+					rc =  cam_soc_util_regulator_enable(
+						soc_info->rgltr[vreg_idx],
+						soc_info->rgltr_name[vreg_idx],
+						soc_info->rgltr_min_volt[vreg_idx],
+						soc_info->rgltr_max_volt[vreg_idx],
+						soc_info->rgltr_op_mode[vreg_idx],
+						soc_info->rgltr_delay[vreg_idx]);
+					if (rc) {
+						CAM_ERR(CAM_SENSOR,
+							"Reg Enable failed for %s",
+							soc_info->rgltr_name[vreg_idx]);
+						goto power_up_failed;
+					}
+					power_setting->data[0] =
+							soc_info->rgltr[vreg_idx];
+				} else {
+					CAM_ERR(CAM_SENSOR, "usr_idx:%d dts_idx:%d",
+						power_setting->seq_val, num_vreg);
+				}
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_setting->seq_type,
+					gpio_num_info, 1);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+					goto power_up_failed;
+				}
+			}else {
+
+				if (no_gpio) {
+					CAM_ERR(CAM_SENSOR, "request gpio failed");
+					continue;;
+				}
+				if (!gpio_num_info) {
+					CAM_ERR_RATE_LIMIT_BY_USER(CAM_SENSOR, "Invalid gpio_num_info");
+					continue;
+				}
+				CAM_DBG(CAM_SENSOR, "gpio set val %d",
+					gpio_num_info->gpio_num
+					[power_setting->seq_type]);
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_setting->seq_type,
+					gpio_num_info,
+					1);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+					goto power_up_failed;
+				}
+			}
+#elif defined CONFIG_PRODUCT_ZIPPO
+			if (power_setting->seq_val != INVALID_VREG)
+			{
+				if (power_setting->seq_val >= CAM_VREG_MAX) {
+					CAM_ERR(CAM_SENSOR, "vreg index %d >= max %d",
+						power_setting->seq_val,
+						CAM_VREG_MAX);
+					goto power_up_failed;
+				}
+				if (power_setting->seq_val < num_vreg) {
+					CAM_DBG(CAM_SENSOR, "Enable Regulator");
+					vreg_idx = power_setting->seq_val;
+
+					soc_info->rgltr[vreg_idx] =
+						regulator_get(soc_info->dev,
+							soc_info->rgltr_name[vreg_idx]);
+					if (IS_ERR_OR_NULL(
+						soc_info->rgltr[vreg_idx])) {
+						rc = PTR_ERR(soc_info->rgltr[vreg_idx]);
+						rc = rc ? rc : -EINVAL;
+
+						CAM_ERR(CAM_SENSOR, "%s get failed %d",
+							soc_info->rgltr_name[vreg_idx],
+							rc);
+
+						soc_info->rgltr[vreg_idx] = NULL;
+						goto power_up_failed;
+					}
+
+					rc =  cam_soc_util_regulator_enable(
+						soc_info->rgltr[vreg_idx],
+						soc_info->rgltr_name[vreg_idx],
+						soc_info->rgltr_min_volt[vreg_idx],
+						soc_info->rgltr_max_volt[vreg_idx],
+						soc_info->rgltr_op_mode[vreg_idx],
+						soc_info->rgltr_delay[vreg_idx]);
+					if (rc) {
+						CAM_ERR(CAM_SENSOR,
+							"Reg Enable failed for %s",
+							soc_info->rgltr_name[vreg_idx]);
+						goto power_up_failed;
+					}
+					power_setting->data[0] =
+							soc_info->rgltr[vreg_idx];
+				} else {
+					CAM_ERR(CAM_SENSOR, "usr_idx:%d dts_idx:%d",
+						power_setting->seq_val, num_vreg);
+				}
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_setting->seq_type,
+					gpio_num_info, 1);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+					goto power_up_failed;
+				}
+			}else {
+				if (no_gpio) {
+					CAM_ERR(CAM_SENSOR, "request gpio failed");
+					continue;;
+				}
+				if (!gpio_num_info) {
+					CAM_ERR(CAM_SENSOR, "Invalid gpio_num_info");
+					continue;
+				}
+				CAM_DBG(CAM_SENSOR, "gpio set val %d",
+					gpio_num_info->gpio_num
+					[power_setting->seq_type]);
+
+				rc = msm_cam_sensor_handle_reg_gpio(
+					power_setting->seq_type,
+					gpio_num_info,
+					1);
+				if (rc < 0) {
+					CAM_ERR(CAM_SENSOR,
+						"Error in handling VREG GPIO");
+					goto power_up_failed;
+				}
+			}
+#else
 			if (power_setting->seq_val == INVALID_VREG)
 				break;
 
@@ -1658,6 +1841,7 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 					"Error in handling VREG GPIO");
 				goto power_up_failed;
 			}
+#endif
 			break;
 		default:
 			CAM_ERR(CAM_SENSOR, "error power seq type %d",
@@ -1827,7 +2011,7 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 	gpio_num_info = ctrl->gpio_num_info;
 	num_vreg = soc_info->num_rgltr;
 
-	if ((num_vreg <= 0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {
+	if ((num_vreg </*=*/ 0) || (num_vreg > CAM_SOC_MAX_REGULATOR)) {   //LENOVO CHANGED FOR ACTUATOR NO REG
 		CAM_ERR(CAM_SENSOR, "failed: num_vreg %d", num_vreg);
 		return -EINVAL;
 	}
@@ -1868,15 +2052,27 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 		case SENSOR_STANDBY:
 		case SENSOR_CUSTOM_GPIO1:
 		case SENSOR_CUSTOM_GPIO2:
-
 			if (!gpio_num_info->valid[pd->seq_type])
 				continue;
-
+#ifdef CONFIG_PRODUCT_HEART
+			if(pd->seq_type == SENSOR_CUSTOM_GPIO1 ||
+				pd->seq_type == SENSOR_CUSTOM_GPIO2) {
+				ret = cam_power_ldo_control(soc_info->index, false);
+				if (ret < 0)
+					CAM_ERR(CAM_SENSOR, "wl set cam%d vol failed: ret: %d", soc_info->index, ret);
+			}
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+			if(pd->seq_type == SENSOR_CUSTOM_GPIO1) {
+				ret = cam_power_ldo_control(soc_info->index, false);
+				if (ret < 0)
+					CAM_ERR(CAM_SENSOR, "wl set cam%d vol failed: ret: %d", soc_info->index, ret);
+			}
+#endif
 			cam_res_mgr_gpio_set_value(
 				gpio_num_info->gpio_num
 				[pd->seq_type],
 				(int) pd->config_val);
-
 			break;
 		case SENSOR_VANA:
 		case SENSOR_VDIG:

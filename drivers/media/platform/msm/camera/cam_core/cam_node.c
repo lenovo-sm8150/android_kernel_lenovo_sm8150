@@ -196,7 +196,11 @@ static int __cam_node_handle_start_dev(struct cam_node *node,
 
 	rc = cam_context_handle_start_dev(ctx, start);
 	if (rc)
+#ifdef CONFIG_PRODUCT_HEART
+		CAM_ERR_RATE_LIMIT_BY_USER(CAM_CORE, "Start failure for node %s", node->name);
+#else
 		CAM_ERR(CAM_CORE, "Start failure for node %s", node->name);
+#endif
 
 	return rc;
 }
@@ -678,8 +682,13 @@ acquire_kfree:
 		else {
 			rc = __cam_node_handle_start_dev(node, &start);
 			if (rc)
+#ifdef CONFIG_PRODUCT_HEART
+				CAM_ERR_RATE_LIMIT_BY_USER(CAM_CORE,
+					"start device failed(rc = %d)", rc);
+#else
 				CAM_ERR(CAM_CORE,
 					"start device failed(rc = %d)", rc);
+#endif
 		}
 		break;
 	}

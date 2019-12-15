@@ -443,7 +443,17 @@ static int32_t cam_flash_platform_probe(struct platform_device *pdev)
 			fctrl->cci_i2c_master = MASTER_0;
 			rc = 0;
 		}
-
+#ifdef CONFIG_PRODUCT_HEART
+		rc = of_property_read_u32(pdev->dev.of_node, "cci-device",
+			&fctrl->cci_device);
+		CAM_DBG(CAM_FLASH, "cci-device %d, rc %d",
+			fctrl->cci_device, rc);
+		if (rc < 0) {
+			/* Set default device number 0 */
+			fctrl->cci_device = CCI_DEVICE_0;
+			rc = 0;
+		}
+#endif
 		fctrl->io_master_info.master_type = CCI_MASTER;
 		rc = cam_flash_init_default_params(fctrl);
 		if (rc) {

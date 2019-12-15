@@ -14,7 +14,22 @@
 #include "sm8150-wcd.dtsi"
 #include "msm-wsa881x.dtsi"
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
-
+#ifdef CONFIG_PRODUCT_HEART
+&snd_madera {
+	qcom,ext-disp-audio-rx = <1>;
+	qcom,wcn-btfm = <1>;
+	qcom,mi2s-audio-intf = <1>;
+	qcom,auxpcm-audio-intf = <1>;
+	qcom,msm-mi2s-master = <1>, <1>, <1>, <1>, <1>;
+	asoc-codec = <&stub_codec>, <&ext_disp_audio_codec>,<&debussy>;
+	asoc-codec-names = "msm-stub-codec.1",
+			"msm-ext-disp-audio-codec-rx","debussy";
+     	qcom,audio-routing =
+	     "IN2R",  "MICBIAS2B",
+	     "IN2L",  "MICBIAS2A",
+	     "IN1BL", "MICBIAS1A";
+};
+#endif
 &snd_9360 {
 	qcom,ext-disp-audio-rx = <1>;
 	qcom,wcn-btfm = <1>;
@@ -74,24 +89,10 @@
 		"hifi amp", "LINEOUT2",
 		"AMIC2", "MIC BIAS2",
 		"MIC BIAS2", "Headset Mic",
-		"AMIC3", "MIC BIAS2",
-		"MIC BIAS2", "ANCRight Headset Mic",
-		"AMIC4", "MIC BIAS2",
-		"MIC BIAS2", "ANCLeft Headset Mic",
-		"AMIC5", "MIC BIAS3",
-		"MIC BIAS3", "Handset Mic",
-		"DMIC0", "MIC BIAS1",
-		"MIC BIAS1", "Digital Mic0",
-		"DMIC1", "MIC BIAS1",
-		"MIC BIAS1", "Digital Mic1",
-		"DMIC2", "MIC BIAS3",
-		"MIC BIAS3", "Digital Mic2",
-		"DMIC3", "MIC BIAS3",
-		"MIC BIAS3", "Digital Mic3",
-		"DMIC4", "MIC BIAS4",
-		"MIC BIAS4", "Digital Mic4",
-		"DMIC5", "MIC BIAS4",
-		"MIC BIAS4", "Digital Mic5",
+		"AMIC4", "MIC BIAS4",
+		"MIC BIAS4", "ANCLeft Headset Mic",
+		"AMIC1", "MIC BIAS1",
+		"MIC BIAS1", "Handset Mic",
 		"SpkrLeft IN", "SPK1 OUT",
 		"SpkrRight IN", "SPK2 OUT";
 
@@ -102,19 +103,28 @@
 	qcom,hph-en0-gpio = <&tavil_hph_en0>;
 	qcom,hph-en1-gpio = <&tavil_hph_en1>;
 	qcom,tavil-mclk-clk-freq = <9600000>;
-
+	pinctrl-names = "quat_mi2s_enable", "quat_mi2s_disable";
+	pinctrl-0 = <&quat_mi2s_active &quat_mi2s_sd0_active &quat_mi2s_sd1_active>;
+	pinctrl-1 = <&quat_mi2s_sleep &quat_mi2s_sd0_sleep &quat_mi2s_sd1_sleep>;
 	asoc-codec = <&stub_codec>, <&ext_disp_audio_codec>;
 	asoc-codec-names = "msm-stub-codec.1",
 			   "msm-ext-disp-audio-codec-rx";
-
-	qcom,wsa-max-devs = <2>;
-	qcom,wsa-devs = <&wsa881x_70211>, <&wsa881x_70212>,
-			<&wsa881x_70213>, <&wsa881x_70214>;
-	qcom,wsa-aux-dev-prefix = "SpkrLeft", "SpkrRight",
-				  "SpkrLeft", "SpkrRight";
 };
 
 &soc {
+#ifdef CONFIG_PRODUCT_HEART
+	msm-cirrus-playback {
+		compatible = "cirrus,msm-cirrus-playback";
+		usecase-names = "Playback", "Voice", "Ringtone", "Misc";
+	};
+
+	dummy_vreg: dummy_vreg {
+		compatible = "regulator-fixed";
+		status = "ok";
+		regulator-name = "dummy_vreg";
+		regulator-always-on;
+	};
+#endif
 	wcd9xxx_intc: wcd9xxx-irq {
 		status = "ok";
 		compatible = "qcom,wcd9xxx-irq";
@@ -140,6 +150,9 @@
 	};
 
 	wcd_rst_gpio: msm_cdc_pinctrl@143 {
+	#ifdef CONFIG_PRODUCT_HEART
+		status = "disabled";
+	#endif
 		compatible = "qcom,msm-cdc-pinctrl";
 		qcom,cdc-rst-n-gpio = <&tlmm 143 0>;
 		pinctrl-names = "aud_active", "aud_sleep";
@@ -182,7 +195,22 @@
 };
 
 &slim_aud {
+#ifdef CONFIG_PRODUCT_HEART
+	madera_codec: madera-codec {
+	        status = "ok";
+		compatible = "cirrus,madera-slim-audio";
+		elemental-addr = [00 00 60 63 FA 01];
+		clock-names = "madera_clk";
+		clocks = <&clock_audio_lnbb 0>;
+	};
+#endif
 	wcd9360_cdc: pahu_codec {
+#ifdef CONFIG_PRODUCT_HEART
+	        status = "disabled";
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+	        status = "disabled";
+#endif
 		compatible = "qcom,pahu-slim-pgd";
 		elemental-addr = [00 01 C0 02 17 02];
 
@@ -246,6 +274,12 @@
 	};
 
 	wcd934x_cdc: tavil_codec {
+#ifdef CONFIG_PRODUCT_HEART
+	        status = "disabled";
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+	        status = "okay";
+#endif
 		compatible = "qcom,tavil-slim-pgd";
 		elemental-addr = [00 01 50 02 17 02];
 
@@ -312,7 +346,29 @@
 		};
 	};
 };
+#ifdef CONFIG_PRODUCT_HEART
+&tlmm {
+	igo1201_reset_default: igo1201_reset_default {
+		config {
+			pins = "gpio89";
+			output-low;
+			bias-pull-up;
+			drive-strength = <2>;
+		};
+	};
+	
 
+	aud_soc_mode_sel_default: aud_soc_mode_sel_default {
+		config {
+			pins = "gpio90";
+			output-low;
+			bias-pull-up;
+			drive-strength = <2>;
+		};
+	};
+
+};
+#endif
 &qupv3_se4_i2c {
 	aqt1000_cdc: aqt1000-i2c-codec@d {
 		status = "disabled";
@@ -350,3 +406,46 @@
 		qcom,cdc-micbias1-mv = <1800>;
 	};
 };
+#ifdef CONFIG_PRODUCT_HEART
+&qupv3_se11_i2c {
+        status = "ok";
+	debussy:debussy@5d {
+			status = "okay";
+			compatible = "intelligo,debussy";
+			vdebussy-supply = <&pm8150l_l8>;
+			ig,reset-gpios = <&tlmm 89 0>;
+			ig,reset-hold-time = <5>;
+			ig,reset-release-time = <50>;
+			ig,deb-gpios = <&tlmm 88 1>;
+			ig,debounce = <5>;
+			ig,mcu-hold-gpios = <&tlmm 90 0>;
+			reg = <0x5d>;
+			interrupt-parent = <&tlmm>;
+			interrupts = <88 IRQ_TYPE_EDGE_RISING>;
+			clock-names = "igo_mclk";
+			clocks = <&clock_rpmh RPMH_RF_CLK3>;
+			debussy,power-on-delay-us = <300000>;
+			debussy,power-off-delay-us = <5000>;
+			pinctrl-names = "reset", "aud_soc_mode_sel";
+			pinctrl-0 = <&igo1201_reset_default>;
+			pinctrl-1 = <&aud_soc_mode_sel_default>;
+		};
+};
+&qupv3_se4_i2c {
+	status = "ok";
+	fsa4480: fsa4480@42 {
+		compatible = "qcom,fsa4480-i2c";
+		reg = <0x42>;
+		fsa_codec_det-gpios = <&tlmm 42 0>;
+		vdd-mic-bias-supply = <&pm8150l_bob>;
+		madera,rgltr-min-voltage = <3008000>;//3008000
+		madera,rgltr-max-voltage = <4000000>;
+		madera,rgltr-load-current = <2000000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&fsa_codec_det>;
+	};
+};
+#endif
+
+

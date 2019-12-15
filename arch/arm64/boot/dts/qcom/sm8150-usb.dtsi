@@ -92,7 +92,8 @@
 			compatible = "snps,dwc3";
 			reg = <0x0a600000 0xcd00>;
 			interrupts = <0 133 0>;
-			usb-phy = <&usb2_phy0>, <&usb_qmp_dp_phy>;
+			usb-phy = <&usb2_phy0>, <&usb_nop_phy>;
+			maximum-speed = "high-speed";
 			linux,sysdev_is_parent;
 			snps,disable-clk-gating;
 			snps,has-lpm-erratum;
@@ -101,7 +102,7 @@
 			snps,usb3-u1u2-disable;
 			usb-core-id = <0>;
 			tx-fifo-resize;
-			maximum-speed = "super-speed-plus";
+			/* maximum-speed = "super-speed-plus"; */
 			dr_mode = "otg";
 		};
 
@@ -135,6 +136,10 @@
 		};
 	};
 
+        usb_nop_phy: usb_nop_phy {
+               compatible = "usb-nop-xceiv";
+        };
+
 	/* Primary USB port related High Speed PHY */
 	usb2_phy0: hsphy@88e2000 {
 		compatible = "qcom,usb-hsphy-snps-femto";
@@ -162,6 +167,7 @@
 		compatible = "qcom,usb-ssphy-qmp-dp-combo";
 		reg = <0x88e8000 0x3000>;
 		reg-names = "qmp_phy_base";
+		status = "disabled";
 
 		vdd-supply = <&pm8150_l5>;
 		qcom,vdd-voltage-level = <0 880000 880000>;

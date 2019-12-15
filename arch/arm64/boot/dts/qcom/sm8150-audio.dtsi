@@ -30,6 +30,9 @@
 
 &audio_apr {
 	snd_9360: sound-pahu {
+#ifdef CONFIG_PRODUCT_HEART
+	        status = "disabled";
+#endif
 		compatible = "qcom,sm8150-asoc-snd-pahu";
 		qcom,model = "sm8150-pahu-snd-card";
 
@@ -91,6 +94,9 @@
 	};
 
 	snd_934x: sound-tavil {
+#ifdef CONFIG_PRODUCT_HEART
+	        status = "disabled";
+#endif
 		compatible = "qcom,sm8150-asoc-snd-tavil";
 		qcom,model = "sm8150-tavil-snd-card";
 
@@ -153,6 +159,7 @@
 	};
 };
 
+#ifndef CONFIG_PRODUCT_HEART
 &qupv3_se4_i2c {
 	status = "ok";
 	fsa4480: fsa4480@43 {
@@ -162,10 +169,22 @@
 		pinctrl-0 = <&fsa_usbc_ana_en>;
 	};
 };
-
 &slim_aud {
 	msm_dai_slim {
 		compatible = "qcom,msm-dai-slim";
 		elemental-addr = [ff ff ff fe 17 02];
 	};
 };
+#else
+&qupv3_se4_i2c {
+	status = "ok";
+	fsa4480: fsa4480@42 {
+		compatible = "qcom,fsa4480-i2c";
+		reg = <0x42>;
+		fsa_codec_det-gpios = <&tlmm 42 0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&fsa_usbc_ana_en>;
+	};
+};
+#endif
+

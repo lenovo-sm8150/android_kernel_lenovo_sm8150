@@ -624,6 +624,8 @@ static int qti_haptics_load_constant_waveform(struct qti_hap_chip *chip)
 	int rc = 0;
 
 	rc = qti_haptics_config_play_rate_us(chip, config->play_rate_us);
+	dev_dbg(chip->dev, "constant wareform, freq = %d\n",
+			config->play_rate_us);
 	if (rc < 0)
 		return rc;
 	/*
@@ -1452,6 +1454,54 @@ static int qti_haptics_parse_dt(struct qti_hap_chip *chip)
 }
 
 #ifdef CONFIG_DEBUG_FS
+/* constant waveform debug fs start */
+static int play_rate_read(void *data, u64 *val)
+{
+	struct qti_hap_chip *chip = (struct qti_hap_chip *)data;
+	struct qti_hap_config *config = &chip->config;
+
+	*val = config->play_rate_us;
+
+	return 0;
+}
+
+static int play_rate_write(void *data, u64 val)
+{
+	struct qti_hap_chip *chip = (struct qti_hap_chip *)data;
+	struct qti_hap_config *config = &chip->config;
+
+	if (val > HAP_PLAY_RATE_US_MAX)
+		val = HAP_PLAY_RATE_US_MAX;
+
+	config->play_rate_us = val;
+
+	return 0;
+}
+
+static int vmax_read(void *data, u64 *val)
+{
+	struct qti_hap_chip *chip = (struct qti_hap_chip *)data;
+	struct qti_hap_config *config = &chip->config;
+
+	*val = config->vmax_mv;
+
+	return 0;
+}
+
+static int vmax_write(void *data, u64 val)
+{
+	struct qti_hap_chip *chip = (struct qti_hap_chip *)data;
+	struct qti_hap_config *config = &chip->config;
+
+	if (val > HAP_VMAX_MV_MAX)
+		val = HAP_VMAX_MV_MAX;
+
+	config->vmax_mv = val;
+
+	return 0;
+}
+/* constant waveform debug fs end */
+
 static int play_rate_dbgfs_read(void *data, u64 *val)
 {
 	struct qti_hap_effect *effect = (struct qti_hap_effect *)data;
@@ -1565,6 +1615,10 @@ static int auto_res_dbgfs_write(void *data, u64 val)
 	return 0;
 }
 
+DEFINE_SIMPLE_ATTRIBUTE(play_rate_ops,  play_rate_read,
+		play_rate_write, "%llu\n");
+DEFINE_SIMPLE_ATTRIBUTE(vmax_ops, vmax_read,
+		vmax_write, "%llu\n");
 DEFINE_SIMPLE_ATTRIBUTE(play_rate_debugfs_ops,  play_rate_dbgfs_read,
 		play_rate_dbgfs_write, "%llu\n");
 DEFINE_SIMPLE_ATTRIBUTE(vmax_debugfs_ops, vmax_dbgfs_read,
@@ -1797,6 +1851,26 @@ static int create_effect_debug_files(struct qti_hap_effect *effect,
 	return 0;
 }
 
+static int create_constant_debug_files(struct qti_hap_chip *chip,
+				struct dentry *dir)
+{
+	struct dentry *file;
+	file = debugfs_create_file("play_rate_us", 0644, dir,
+			chip, &play_rate_ops);
+	if (!file) {
+		pr_err("create play-rate node failed\n");
+		return -ENOMEM;
+	}
+
+	file = debugfs_create_file("vmax_mv", 0644, dir,
+			chip, &vmax_ops);
+	if (!file) {
+		pr_err("create vmax node failed\n");
+		return -ENOMEM;
+	}
+	return 0;
+}
+
 static int qti_haptics_add_debugfs(struct qti_hap_chip *chip)
 {
 	struct dentry *hap_dir, *effect_dir;
@@ -1808,6 +1882,7 @@ static int qti_haptics_add_debugfs(struct qti_hap_chip *chip)
 		pr_err("create haptics debugfs directory failed\n");
 		return -ENOMEM;
 	}
+	create_constant_debug_files(chip, hap_dir);
 
 	for (i = 0; i < chip->effects_count; i++) {
 		snprintf(str, ARRAY_SIZE(str), "effect%d", i);

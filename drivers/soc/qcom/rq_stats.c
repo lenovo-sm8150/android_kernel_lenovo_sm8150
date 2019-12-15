@@ -57,8 +57,31 @@ static struct kobj_attribute def_timer_ms_attr =
 	__ATTR(def_timer_ms, 0600, show_def_timer_ms,
 			store_def_timer_ms);
 
+#ifdef SUPPORT_USER_PERF_OP
+static ssize_t show_mpctl(struct kobject *kobj,
+               struct kobj_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%s\n", rq_info.mpctl);
+}
+
+static ssize_t store_mpctl(struct kobject *kobj,
+               struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	snprintf(rq_info.mpctl, MPCTL_MAX_CMD, "%s", buf);
+	sysfs_notify(rq_info.kobj, NULL, "mpctl");
+	return count;
+}
+
+static struct kobj_attribute mpctl_attr =
+	__ATTR(mpctl, S_IWUSR | S_IRUSR, show_mpctl,
+			store_mpctl);
+#endif
+
 static struct attribute *rq_attrs[] = {
 	&def_timer_ms_attr.attr,
+#ifdef SUPPORT_USER_PERF_OP
+	&mpctl_attr.attr,
+#endif
 	NULL,
 };
 
@@ -70,6 +93,9 @@ static int init_rq_attribs(void)
 {
 	int err;
 
+#ifdef SUPPORT_USER_PERF_OP
+	rq_info.mpctl[0] = '0';
+#endif
 	rq_info.attr_group = &rq_attr_group;
 
 	/* Create /sys/devices/system/cpu/cpu0/rq-stats/... */

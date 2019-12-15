@@ -28,6 +28,7 @@
 #ifdef CONFIG_COMPAT
 #include <linux/compat.h>
 #endif
+#include <linux/proc_fs.h>
 
 struct nqx_platform_data {
 	unsigned int irq_gpio;
@@ -92,6 +93,27 @@ struct nqx_dev {
 	size_t kbuflen;
 	u8 *kbuf;
 	struct nqx_platform_data *pdata;
+};
+
+/*
+ * nfc check for factory
+ */
+char g_nfc_check_flag = 0;
+
+static ssize_t nfc_check_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
+{
+	char kbuf[4] = {0};
+	kbuf[0] = g_nfc_check_flag;
+
+	if(count > 4*sizeof(char))
+		count = 4*sizeof(char);
+        if(copy_to_user(buf, kbuf, count))
+		count = -EFAULT;
+	return count;
+}
+
+static const struct file_operations nfc_check_fops = {
+        .read = nfc_check_read,
 };
 
 static int nfcc_reboot(struct notifier_block *notifier, unsigned long val,
@@ -1085,8 +1107,10 @@ static int nqx_probe(struct i2c_client *client,
 	int irqn = 0;
 	struct nqx_platform_data *platform_data;
 	struct nqx_dev *nqx_dev;
+	struct proc_dir_entry *nfc_check_entry = NULL;
 
 	dev_dbg(&client->dev, "%s: enter\n", __func__);
+	g_nfc_check_flag = 0;
 	if (client->dev.of_node) {
 		platform_data = devm_kzalloc(&client->dev,
 			sizeof(struct nqx_platform_data), GFP_KERNEL);
@@ -1307,12 +1331,10 @@ static int nqx_probe(struct i2c_client *client,
 	 *
 	 */
 	r = nfcc_hw_check(client, nqx_dev);
-	if (r) {
-		/* make sure NFCC is not enabled */
-		gpio_set_value(platform_data->en_gpio, 0);
-		/* We don't think there is hardware switch NFC OFF */
-		goto err_request_hw_check_failed;
-	}
+	if (r)
+		g_nfc_check_flag = -1;
+	else
+		g_nfc_check_flag = 1;
 
 	/* Register reboot notifier here */
 	r = register_reboot_notifier(&nfcc_notifier);
@@ -1340,7 +1362,9 @@ static int nqx_probe(struct i2c_client *client,
 	device_set_wakeup_capable(&client->dev, true);
 	i2c_set_clientdata(client, nqx_dev);
 	nqx_dev->irq_wake_up = false;
-
+	nfc_check_entry = proc_create("nfc_check", 0444, NULL, &nfc_check_fops);
+	if(!nfc_check_entry)
+		dev_err(&client->dev,"%s:nfc_check proc create fail!",__func__);
 	dev_err(&client->dev,
 	"%s: probing NFCC NQxxx exited successfully\n",
 		 __func__);

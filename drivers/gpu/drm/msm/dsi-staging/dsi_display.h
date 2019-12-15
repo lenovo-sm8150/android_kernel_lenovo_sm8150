@@ -606,7 +606,8 @@ void dsi_display_enable_event(struct drm_connector *connector,
  */
 int dsi_display_set_backlight(struct drm_connector *connector,
 		void *display, u32 bl_lvl);
-
+int dsi_display_set_backlight_hbm(struct drm_connector *connector,
+		void *display, u32 bl_lvl);
 /**
  * dsi_display_check_status() - check if panel is dead or alive
  * @connector:          Pointer to drm connector structure
@@ -614,6 +615,9 @@ int dsi_display_set_backlight(struct drm_connector *connector,
  * @te_check_override:	Whether check for TE from panel or default check
  */
 int dsi_display_check_status(struct drm_connector *connector, void *display,
+				bool te_check_override);
+
+int dsi_display_read_elvss_volt(struct drm_connector *connector, void *display,
 				bool te_check_override);
 
 /**

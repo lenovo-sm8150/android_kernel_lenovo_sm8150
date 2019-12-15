@@ -35,6 +35,7 @@ struct  cam_sensor_query_cap {
 	uint32_t        ois_slot_id;
 	uint32_t        flash_slot_id;
 	uint32_t        csiphy_slot_id;
+	uint32_t        hcg_ratio; //LENOVO_CUSTOM
 } __attribute__((packed));
 
 /**

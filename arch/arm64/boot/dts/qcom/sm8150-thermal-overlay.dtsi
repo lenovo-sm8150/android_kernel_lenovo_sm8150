@@ -12,6 +12,8 @@
  */
 #include <dt-bindings/thermal/thermal.h>
 
+//#define ENABLE_QCOM_COMMON_THERMAL
+
 &thermal_zones {
 	pm8150b_tz {
 		cooling-maps {
@@ -127,6 +129,7 @@
 
 	soc {
 		cooling-maps {
+#ifdef ENABLE_QCOM_COMMON_THERMAL /* soc */
 			soc_cpu4 {
 				trip = <&soc_trip>;
 				cooling-device =
@@ -151,6 +154,7 @@
 					<&CPU7 THERMAL_MAX_LIMIT
 						THERMAL_MAX_LIMIT>;
 			};
+#endif
 		};
 	};
 

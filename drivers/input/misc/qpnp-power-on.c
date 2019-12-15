@@ -32,6 +32,7 @@
 #include <linux/regulator/driver.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
+#include <linux/time.h>
 
 #define PMIC_VER_8941				0x01
 #define PMIC_VERSION_REG			0x0105
@@ -859,6 +860,9 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	uint pon_rt_sts;
 	u64 elapsed_us;
 	int rc;
+	struct timeval timestamp;
+	struct tm tm;
+	char buff[255];
 
 	cfg = qpnp_get_cfg(pon, pon_type);
 	if (!cfg)
@@ -885,6 +889,16 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	switch (cfg->pon_type) {
 	case PON_KPDPWR:
 		pon_rt_bit = QPNP_PON_KPDPWR_N_SET;
+		/* get the time stamp in readable format to print*/
+		do_gettimeofday(&timestamp);
+		time_to_tm((time_t)(timestamp.tv_sec), 0, &tm);
+		snprintf(buff, sizeof(buff),
+			"%u-%02d-%02d %02d:%02d:%02d UTC",
+			(int) tm.tm_year + 1900, tm.tm_mon + 1,
+			tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+		pr_info("Report pwrkey %s event at: %s\n", pon_rt_bit &
+			pon_rt_sts ? "press" : "release", buff);
 		break;
 	case PON_RESIN:
 		pon_rt_bit = QPNP_PON_RESIN_N_SET;
@@ -925,6 +939,46 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 	return 0;
 }
 
+static int qpnp_pon_input_dispatch_vol(struct qpnp_pon *pon, u32 pon_type)
+{
+	struct qpnp_pon_config *cfg = NULL;
+	u8  pon_rt_bit = 0;
+	u32 key_status;
+	uint pon_rt_sts;
+	int rc;
+
+	cfg = qpnp_get_cfg(pon, pon_type);
+	if (!cfg)
+		return -EINVAL;
+
+	/* Check if key reporting is supported */
+	if (!cfg->key_code)
+		return 0;
+
+	/* Check the RT status to get the current status of the line */
+	rc = qpnp_pon_read(pon, QPNP_PON_RT_STS(pon), &pon_rt_sts);
+	if (rc)
+		return rc;
+
+	pon_rt_bit = QPNP_PON_RESIN_N_SET;
+
+	pr_info("PMIC input: code=%d, status=0x%02X\n", cfg->key_code,
+		pon_rt_sts);
+	key_status = pon_rt_sts & pon_rt_bit;
+
+	/*
+	 * Report press event if vol key is pressed from xbl
+	 */
+	if (key_status) {
+		input_report_key(pon->pon_input, cfg->key_code, key_status);
+		input_sync(pon->pon_input);
+		cfg->old_state = !!key_status;
+	}
+
+	return 0;
+}
+
+
 static irqreturn_t qpnp_kpdpwr_irq(int irq, void *_pon)
 {
 	int rc;
@@ -939,6 +993,7 @@ static irqreturn_t qpnp_kpdpwr_irq(int irq, void *_pon)
 
 static irqreturn_t qpnp_kpdpwr_bark_irq(int irq, void *_pon)
 {
+	pr_err("kpdpwr bark irq is comming..\n");
 	return IRQ_HANDLED;
 }
 
@@ -956,6 +1011,7 @@ static irqreturn_t qpnp_resin_irq(int irq, void *_pon)
 
 static irqreturn_t qpnp_kpdpwr_resin_bark_irq(int irq, void *_pon)
 {
+	pr_err("kpdpwr and resin bark irq is comming..\n");
 	return IRQ_HANDLED;
 }
 
@@ -1858,6 +1914,55 @@ static struct kernel_param_ops dload_on_uvlo_ops = {
 
 module_param_cb(dload_on_uvlo, &dload_on_uvlo_ops, &dload_on_uvlo, 0600);
 
+static bool dload_on_debug;
+
+static int qpnp_pon_dload_on_debug_get(char *buf, const struct kernel_param *kp)
+{
+	struct qpnp_pon *pon = sys_reset_dev;
+	int rc = 0;
+	uint reg;
+
+	rc = regmap_read(pon->regmap, QPNP_PON_KPDPWR_RESIN_S2_CNTL2(pon), &reg);
+	if (rc) {
+		dev_err(pon->dev, "Unable to read s2-cntl2, rc=%d\n", rc);
+		return rc;
+	}
+
+	return snprintf(buf, QPNP_PON_BUFFER_SIZE, "%d\n", !!(QPNP_PON_UVLO_DLOAD_EN & reg));
+}
+
+static int qpnp_pon_dload_on_debug_set(const char *val,
+					const struct kernel_param *kp)
+{
+	struct qpnp_pon *pon = sys_reset_dev;
+	int rc;
+	uint reg = 0;
+
+	rc = param_set_bool(val, kp);
+	if (rc < 0) {
+		pr_err("Unable to set dload_on_debug rc=%d\n", rc);
+		return rc;
+	}
+
+	if (*(bool *)kp->arg)
+		reg |= QPNP_PON_S2_CNTL_EN;
+
+	rc = regmap_write(pon->regmap, QPNP_PON_KPDPWR_RESIN_S2_CNTL2(pon), reg);
+	if (rc) {
+		dev_err(pon->dev, "Unable to write s2-cntl2, rc=%d\n", rc);
+		return rc;
+	}
+
+	return 0;
+}
+
+static struct kernel_param_ops dload_on_debug_ops = {
+	.set = qpnp_pon_dload_on_debug_set,
+	.get = qpnp_pon_dload_on_debug_get,
+};
+
+module_param_cb(dload_on_debug, &dload_on_debug_ops, &dload_on_debug, 0644);
+
 #if defined(CONFIG_DEBUG_FS)
 
 static int qpnp_pon_debugfs_uvlo_get(void *data, u64 *val)
@@ -2307,6 +2412,7 @@ static int qpnp_pon_probe(struct platform_device *pdev)
 
 	qpnp_pon_debugfs_init(pon);
 
+	qpnp_pon_input_dispatch_vol(pon, PON_RESIN);
 	return 0;
 }
 

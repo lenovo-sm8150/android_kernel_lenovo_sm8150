@@ -20,6 +20,10 @@ struct timer_list {
 	void			(*function)(unsigned long);
 	unsigned long		data;
 	u32			flags;
+ 
+	int			start_pid;
+	void			*start_site;
+	char			start_comm[16];
 
 #ifdef CONFIG_LOCKDEP
 	struct lockdep_map	lockdep_map;
@@ -212,6 +216,30 @@ extern bool check_pending_deferrable_timers(int cpu);
  */
 #define NEXT_TIMER_MAX_DELTA	((1UL << 30) - 1)
 
+/*
+ * Timer-statistics info:
+ */
+extern int timer_stats_active;
+
+extern void init_timer_stats(void);
+
+extern void timer_stats_update_stats(void *timer, pid_t pid, void *startf,
+				     void *timerf, char *comm, u32 flags);
+
+extern void __timer_stats_timer_set_start_info(struct timer_list *timer,
+					       void *addr);
+
+static inline void timer_stats_timer_set_start_info(struct timer_list *timer)
+{
+	if (likely(!timer_stats_active))
+		return;
+	__timer_stats_timer_set_start_info(timer, __builtin_return_address(0));
+}
+
+static inline void timer_stats_timer_clear_start_info(struct timer_list *timer)
+{
+	timer->start_site = NULL;
+}
 /* To be used from cpusets, only */
 extern void timer_quiesce_cpu(void *cpup);
 
