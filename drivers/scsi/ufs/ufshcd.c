@@ -849,6 +849,7 @@ static void ufshcd_cmd_log_init(struct ufs_hba *hba)
 	}
 }
 
+#ifdef CONFIG_TRACEPOINTS
 static void __ufshcd_cmd_log(struct ufs_hba *hba, char *str, char *cmd_type,
 			     unsigned int tag, u8 cmd_id, u8 idn, u8 lun,
 			     sector_t lba, u32 transfer_len)
@@ -879,6 +880,7 @@ static void __ufshcd_cmd_log(struct ufs_hba *hba, char *str, char *cmd_type,
 
 	ufshcd_add_command_trace(hba, entry, strcmp(cmd_type, "clk-gating"));
 }
+#endif
 
 static void ufshcd_cmd_log(struct ufs_hba *hba, char *str, char *cmd_type,
 	unsigned int tag, u8 cmd_id, u8 idn)
