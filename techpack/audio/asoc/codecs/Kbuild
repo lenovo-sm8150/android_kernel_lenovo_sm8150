@@ -54,6 +54,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
 	endif
+	ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+		include $(AUDIO_ROOT)/config/tfa9874auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/tfa9874autoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
@@ -147,6 +152,16 @@ ifdef CONFIG_SND_SOC_MSM_HDMI_CODEC_RX
 	HDMICODEC_OBJS += msm_hdmi_codec_rx.o
 endif
 
+ifdef CONFIG_SND_SOC_IGO1201_I2C
+	IGO1201_OBJS += debussy_0927/debussy.o
+	IGO1201_OBJS += debussy_0927/debussy_intf.o
+	IGO1201_OBJS += debussy_0927/debussy_snd_ctrl.o
+	IGO1201_OBJS += debussy_0927/debussy_kws.o
+	IGO1201_OBJS += debussy_0927/debussy_intf_i2c.o
+	IGO1201_OBJS += debussy_0927/debussy_flash.o
+	IGO1201_OBJS += debussy_0927/debussy_psram.o
+endif
+
 ifdef CONFIG_SND_SOC_WCD_IRQ
 	CORE_OBJS += wcd-irq.o
 endif
@@ -230,6 +245,10 @@ mbhc_dlkm-y := $(MBHC_OBJS)
 
 obj-$(CONFIG_SND_SOC_MSM_HDMI_CODEC_RX) += hdmi_dlkm.o
 hdmi_dlkm-y := $(HDMICODEC_OBJS)
+
+
+obj-$(CONFIG_SND_SOC_IGO1201_I2C) +=  igo1201_dlkm.o
+igo1201_dlkm-y := $(IGO1201_OBJS)
 
 # inject some build related information
 DEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
