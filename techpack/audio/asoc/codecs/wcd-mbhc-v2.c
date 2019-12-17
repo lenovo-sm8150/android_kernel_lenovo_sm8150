@@ -1829,6 +1829,8 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 		dev_dbg(card->dev,
 			"%s: skipping USB c analog configuration\n", __func__);
 	}
+	dev_err(mbhc->codec->dev, "%s: enter mbhc_cfg->enable_usbc_analog:%d\n",
+		__func__, mbhc_cfg->enable_usbc_analog);
 
 	/* Parse fsa switch handle */
 	if (mbhc_cfg->enable_usbc_analog) {
