@@ -59,6 +59,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
 	endif
+	ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+		include $(AUDIO_ROOT)/config/tfa9874auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/tfa9874autoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
