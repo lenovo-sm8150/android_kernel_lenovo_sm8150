@@ -1,0 +1,774 @@
+#ifndef DEBUSSY_SND_CTRL_H
+#define DEBUSSY_SND_CTRL_H
+
+#include <sound/soc.h>
+#define IGO_CH_POWER_MODE_ADDR (0x00000000)
+#define IGO_CH_FW_VER_ADDR (0x00000004)
+#define IGO_CH_FW_SUB_VER_ADDR (0x00000008)
+#define IGO_CH_CHIP_ID_ADDR (0x0000000c)
+#define IGO_CH_OP_MODE_ADDR (0x00000010)
+#define IGO_CH_MCLK_ADDR (0x00000014)
+#define IGO_CH_CK_OUTPUT_ADDR (0x00000018)
+#define IGO_CH_CH0_RX_ADDR (0x01000000)
+#define IGO_CH_CH0_TX_ADDR (0x01000004)
+#define IGO_CH_CH0_TX_GAIN_ADDR (0x01000008)
+#define IGO_CH_CH1_RX_ADDR (0x0100000c)
+#define IGO_CH_CH1_TX_ADDR (0x01000010)
+#define IGO_CH_CH1_TX_GAIN_ADDR (0x01000014)
+#define IGO_CH_DAI_0_MODE_ADDR (0x01000018)
+#define IGO_CH_DAI_0_CLK_SRC_ADDR (0x0100001c)
+#define IGO_CH_DAI_0_CLK_ADDR (0x01000020)
+#define IGO_CH_DAI_0_DATA_BIT_ADDR (0x01000024)
+#define IGO_CH_DAI_1_MODE_ADDR (0x01000028)
+#define IGO_CH_DAI_1_CLK_SRC_ADDR (0x0100002c)
+#define IGO_CH_DAI_1_CLK_ADDR (0x01000030)
+#define IGO_CH_DAI_1_DATA_BIT_ADDR (0x01000034)
+#define IGO_CH_DAI_2_MODE_ADDR (0x01000038)
+#define IGO_CH_DAI_2_CLK_SRC_ADDR (0x0100003c)
+#define IGO_CH_DAI_2_CLK_ADDR (0x01000040)
+#define IGO_CH_DAI_2_DATA_BIT_ADDR (0x01000044)
+#define IGO_CH_DAI_3_MODE_ADDR (0x01000048)
+#define IGO_CH_DAI_3_CLK_SRC_ADDR (0x0100004c)
+#define IGO_CH_DAI_3_CLK_ADDR (0x01000050)
+#define IGO_CH_DAI_3_DATA_BIT_ADDR (0x01000054)
+#define IGO_CH_DMIC_M_CLK_SRC_ADDR (0x01000058)
+#define IGO_CH_DMIC_M_BCLK_ADDR (0x0100005c)
+#define IGO_CH_DMIC_S_BCLK_ADDR (0x01000060)
+#define IGO_CH_DMIC_M0_P_MODE_ADDR (0x01000064)
+#define IGO_CH_DMIC_M0_N_MODE_ADDR (0x01000068)
+#define IGO_CH_DMIC_M1_P_MODE_ADDR (0x0100006c)
+#define IGO_CH_DMIC_M1_N_MODE_ADDR (0x01000070)
+#define IGO_CH_DMIC_M2_P_MODE_ADDR (0x01000074)
+#define IGO_CH_DMIC_M2_N_MODE_ADDR (0x01000078)
+#define IGO_CH_DMIC_M3_P_MODE_ADDR (0x0100007c)
+#define IGO_CH_DMIC_M3_N_MODE_ADDR (0x01000080)
+#define IGO_CH_DMIC_S0_P_MODE_ADDR (0x01000084)
+#define IGO_CH_DMIC_S0_N_MODE_ADDR (0x01000088)
+#define IGO_CH_DMIC_S1_P_MODE_ADDR (0x0100008c)
+#define IGO_CH_DMIC_S1_N_MODE_ADDR (0x01000090)
+#define IGO_CH_NR_CH0_ADDR (0x02000000)
+#define IGO_CH_NR_CH1_ADDR (0x02000004)
+#define IGO_CH_CH1_REF_MODE_ADDR (0x02000008)
+#define IGO_CH_CH1_REF_RX_ADDR (0x0200000c)
+#define IGO_CH_CH0_FLOOR_ADDR (0x02000010)
+#define IGO_CH_CH1_FLOOR_ADDR (0x02000014)
+#define IGO_CH_CH0_OD_ADDR (0x02000018)
+#define IGO_CH_CH1_OD_ADDR (0x0200001c)
+#define IGO_CH_CH0_THR_ADDR (0x02000020)
+#define IGO_CH_CH1_THR_ADDR (0x02000024)
+#define IGO_CH_HW_BYPASS_DAI_0_ADDR (0x03000000)
+#define IGO_CH_HW_BYPASS_DMIC_S0_ADDR (0x03000004)
+#define IGO_CH_SW_BYPASS_0_RX_ADDR (0x03000008)
+#define IGO_CH_SW_BYPASS_0_TX_ADDR (0x0300000c)
+#define IGO_CH_SW_BYPASS_1_RX_ADDR (0x03000010)
+#define IGO_CH_SW_BYPASS_1_TX_ADDR (0x03000014)
+#define IGO_CH_AEC_ADDR (0x04000000)
+#define IGO_CH_AEC_REF_RX_ADDR (0x04000004)
+#define IGO_CH_VAD_STATUS_ADDR (0x05000000)
+#define IGO_CH_VAD_CLEAR_ADDR (0x05000004)
+#define IGO_CH_VAD_INT_MOD_ADDR (0x05000008)
+#define IGO_CH_VAD_INT_PIN_ADDR (0x0500000c)
+#define IGO_CH_VAD_KEYWORD_ADDR (0x05000010)
+#define IGO_CH_VAD_KEY_GROUP_SEL_ADDR (0x05000014)
+#define IGO_CH_VAD_VOICE_ENHANCE_ADDR (0x05000018)
+#define IGO_CH_VAD_VOICE_ENROLL_ADDR (0x0500001c)
+#define IGO_CH_VAD_ENROLL_CNT_ADDR (0x05000020)
+#define IGO_CH_VAD_ENROLL_APPLY_ADDR (0x05000024)
+#define IGO_CH_VAD_ENROLL_MD_SZ_ADDR (0x05000028)
+#define IGO_CH_VAD_ENROLL_MD_ADDR (0x0500002c)
+#define IGO_CH_VAD_ENROLL_RST_ADDR (0x0500102c)
+#define IGO_CH_VAD_KEYWORD_HIT_ADDR (0x05001030)
+#define IGO_CH_VAD_KEYWORD_HIT_CLEAR_ADDR (0x05001034)
+
+//////////////////////////////////////////////////////////////
+#define IGO_CH_SCENARIOUS_SEL_ADDR (0xFFFFFFFE)
+#define IGO_CH_WAIT_ADDR (0xFFFFFFFF)
+
+enum power_mode{
+    POWER_MODE_STANDBY = 0,
+    POWER_MODE_WORKING = 1,
+};
+
+enum op_mode{
+    OP_MODE_CONFIG = 0,
+    OP_MODE_NR = 1,
+    OP_MODE_VAD = 2,
+    OP_MODE_BYPASS = 3,
+    OP_MODE_NR_AEC = 4,
+};
+
+enum mclk{
+    MCLK_NONE = 0,
+    MCLK_26M = 1,
+    MCLK_24_576M = 2,
+    MCLK_20M = 3,
+    MCLK_19_2M = 4,
+    MCLK_12_288M = 5,
+};
+
+enum ck_output{
+    CK_OUTPUT_DISABLE = 0,
+    CK_OUTPUT_12M = 1,
+};
+
+enum ch0_rx{
+    CH0_RX_DISABLE = 0,
+    CH0_RX_DAI0_RX_L = 1,
+    CH0_RX_DAI0_RX_R = 2,
+    CH0_RX_DAI1_RX_L = 3,
+    CH0_RX_DAI1_RX_R = 4,
+    CH0_RX_DAI2_RX_L = 5,
+    CH0_RX_DAI2_RX_R = 6,
+    CH0_RX_DAI3_RX_L = 7,
+    CH0_RX_DAI3_RX_R = 8,
+    CH0_RX_DMIC_M0_P = 9,
+    CH0_RX_DMIC_M0_N = 10,
+    CH0_RX_DMIC_M1_P = 11,
+    CH0_RX_DMIC_M1_N = 12,
+    CH0_RX_DMIC_COMBO_M0_P = 13,
+    CH0_RX_DMIC_COMBO_M0_N = 14,
+};
+
+enum ch0_tx{
+    CH0_TX_DISABLE = 0,
+    CH0_TX_DAI0_TX_L = 1,
+    CH0_TX_DAI0_TX_R = 2,
+    CH0_TX_DAI1_TX_L = 3,
+    CH0_TX_DAI1_TX_R = 4,
+    CH0_TX_DAI2_TX_L = 5,
+    CH0_TX_DAI2_TX_R = 6,
+    CH0_TX_DAI3_TX_L = 7,
+    CH0_TX_DAI3_TX_R = 8,
+    CH0_TX_DMIC_S0_P = 9,
+    CH0_TX_DMIC_S0_N = 10,
+    CH0_TX_DMIC_S1_P = 11,
+    CH0_TX_DMIC_S1_N = 12,
+    CH0_TX_DMIC_COMBO_S0_P = 13,
+    CH0_TX_DMIC_COMBO_S0_N = 14,
+};
+
+enum ch0_tx_gain{
+    CH0_TX_GAIN_0_DB = 0,
+    CH0_TX_GAIN_P_1_DB = 1,
+    CH0_TX_GAIN_P_2_DB = 2,
+    CH0_TX_GAIN_P_3_DB = 3,
+    CH0_TX_GAIN_P_4_DB = 4,
+    CH0_TX_GAIN_P_5_DB = 5,
+    CH0_TX_GAIN_P_6_DB = 6,
+    CH0_TX_GAIN_P_7_DB = 7,
+    CH0_TX_GAIN_P_8_DB = 8,
+    CH0_TX_GAIN_P_9_DB = 9,
+    CH0_TX_GAIN_P_10_DB = 10,
+    CH0_TX_GAIN_P_11_DB = 11,
+    CH0_TX_GAIN_P_12_DB = 12,
+    CH0_TX_GAIN_P_13_DB = 13,
+    CH0_TX_GAIN_P_14_DB = 14,
+    CH0_TX_GAIN_P_15_DB = 15,
+    CH0_TX_GAIN_P_16_DB = 16,
+    CH0_TX_GAIN_N_1_DB = 17,
+    CH0_TX_GAIN_N_2_DB = 18,
+    CH0_TX_GAIN_N_3_DB = 19,
+    CH0_TX_GAIN_N_4_DB = 20,
+    CH0_TX_GAIN_N_5_DB = 21,
+    CH0_TX_GAIN_N_6_DB = 22,
+    CH0_TX_GAIN_N_7_DB = 23,
+    CH0_TX_GAIN_N_8_DB = 24,
+    CH0_TX_GAIN_N_9_DB = 25,
+    CH0_TX_GAIN_N_10_DB = 26,
+    CH0_TX_GAIN_N_11_DB = 27,
+    CH0_TX_GAIN_N_12_DB = 28,
+    CH0_TX_GAIN_N_13_DB = 29,
+    CH0_TX_GAIN_N_14_DB = 30,
+    CH0_TX_GAIN_N_15_DB = 31,
+    CH0_TX_GAIN_N_16_DB = 32,
+};
+
+enum ch1_rx{
+    CH1_RX_DISABLE = 0,
+    CH1_RX_DAI0_RX_L = 1,
+    CH1_RX_DAI0_RX_R = 2,
+    CH1_RX_DAI1_RX_L = 3,
+    CH1_RX_DAI1_RX_R = 4,
+    CH1_RX_DAI2_RX_L = 5,
+    CH1_RX_DAI2_RX_R = 6,
+    CH1_RX_DAI3_RX_L = 7,
+    CH1_RX_DAI3_RX_R = 8,
+    CH1_RX_DMIC_M0_P = 9,
+    CH1_RX_DMIC_M0_N = 10,
+    CH1_RX_DMIC_M1_P = 11,
+    CH1_RX_DMIC_M1_N = 12,
+    CH1_RX_DMIC_COMBO_M0_P = 13,
+    CH1_RX_DMIC_COMBO_M0_N = 14,
+};
+
+enum ch1_tx{
+    CH1_TX_DISABLE = 0,
+    CH1_TX_DAI0_TX_L = 1,
+    CH1_TX_DAI0_TX_R = 2,
+    CH1_TX_DAI1_TX_L = 3,
+    CH1_TX_DAI1_TX_R = 4,
+    CH1_TX_DAI2_TX_L = 5,
+    CH1_TX_DAI2_TX_R = 6,
+    CH1_TX_DAI3_TX_L = 7,
+    CH1_TX_DAI3_TX_R = 8,
+    CH1_TX_DMIC_S0_P = 9,
+    CH1_TX_DMIC_S0_N = 10,
+    CH1_TX_DMIC_S1_P = 11,
+    CH1_TX_DMIC_S1_N = 12,
+    CH1_TX_DMIC_COMBO_S0_P = 13,
+    CH1_TX_DMIC_COMBO_S0_N = 14,
+};
+
+enum ch1_tx_gain{
+    CH1_TX_GAIN_0_DB = 0,
+    CH1_TX_GAIN_P_1_DB = 1,
+    CH1_TX_GAIN_P_2_DB = 2,
+    CH1_TX_GAIN_P_3_DB = 3,
+    CH1_TX_GAIN_P_4_DB = 4,
+    CH1_TX_GAIN_P_5_DB = 5,
+    CH1_TX_GAIN_P_6_DB = 6,
+    CH1_TX_GAIN_P_7_DB = 7,
+    CH1_TX_GAIN_P_8_DB = 8,
+    CH1_TX_GAIN_P_9_DB = 9,
+    CH1_TX_GAIN_P_10_DB = 10,
+    CH1_TX_GAIN_P_11_DB = 11,
+    CH1_TX_GAIN_P_12_DB = 12,
+    CH1_TX_GAIN_P_13_DB = 13,
+    CH1_TX_GAIN_P_14_DB = 14,
+    CH1_TX_GAIN_P_15_DB = 15,
+    CH1_TX_GAIN_P_16_DB = 16,
+    CH1_TX_GAIN_N_1_DB = 17,
+    CH1_TX_GAIN_N_2_DB = 18,
+    CH1_TX_GAIN_N_3_DB = 19,
+    CH1_TX_GAIN_N_4_DB = 20,
+    CH1_TX_GAIN_N_5_DB = 21,
+    CH1_TX_GAIN_N_6_DB = 22,
+    CH1_TX_GAIN_N_7_DB = 23,
+    CH1_TX_GAIN_N_8_DB = 24,
+    CH1_TX_GAIN_N_9_DB = 25,
+    CH1_TX_GAIN_N_10_DB = 26,
+    CH1_TX_GAIN_N_11_DB = 27,
+    CH1_TX_GAIN_N_12_DB = 28,
+    CH1_TX_GAIN_N_13_DB = 29,
+    CH1_TX_GAIN_N_14_DB = 30,
+    CH1_TX_GAIN_N_15_DB = 31,
+    CH1_TX_GAIN_N_16_DB = 32,
+};
+
+enum dai_0_mode{
+    DAI_0_MODE_DISABLE = 0,
+    DAI_0_MODE_SLAVE = 1,
+    DAI_0_MODE_MASTER = 2,
+};
+
+enum dai_0_clk_src{
+    DAI_0_CLK_SRC_DISABLE = 0,
+    DAI_0_CLK_SRC_MCLK = 1,
+    DAI_0_CLK_SRC_INTERNAL = 2,
+};
+
+enum dai_0_clk{
+    DAI_0_CLK_16K = 0,
+    DAI_0_CLK_32K = 1,
+    DAI_0_CLK_48K = 2,
+};
+
+enum dai_0_data_bit{
+    DAI_0_DATA_BIT_32 = 0,
+    DAI_0_DATA_BIT_16 = 1,
+};
+
+enum dai_1_mode{
+    DAI_1_MODE_DISABLE = 0,
+    DAI_1_MODE_SLAVE = 1,
+    DAI_1_MODE_MASTER = 2,
+};
+
+enum dai_1_clk_src{
+    DAI_1_CLK_SRC_DISABLE = 0,
+    DAI_1_CLK_SRC_MCLK = 1,
+    DAI_1_CLK_SRC_INTERNAL = 2,
+    DAI_1_CLK_SRC_DAI_0 = 3,
+};
+
+enum dai_1_clk{
+    DAI_1_CLK_16K = 0,
+    DAI_1_CLK_32K = 1,
+    DAI_1_CLK_48K = 2,
+};
+
+enum dai_1_data_bit{
+    DAI_1_DATA_BIT_32 = 0,
+    DAI_1_DATA_BIT_16 = 1,
+};
+
+enum dai_2_mode{
+    DAI_2_MODE_DISABLE = 0,
+    DAI_2_MODE_SLAVE = 1,
+    DAI_2_MODE_MASTER = 2,
+};
+
+enum dai_2_clk_src{
+    DAI_2_CLK_SRC_DISABLE = 0,
+    DAI_2_CLK_SRC_MCLK = 1,
+    DAI_2_CLK_SRC_INTERNAL = 2,
+    DAI_2_CLK_SRC_DAI_0 = 3,
+};
+
+enum dai_2_clk{
+    DAI_2_CLK_16K = 0,
+    DAI_2_CLK_32K = 1,
+    DAI_2_CLK_48K = 2,
+};
+
+enum dai_2_data_bit{
+    DAI_2_DATA_BIT_32 = 0,
+    DAI_2_DATA_BIT_16 = 1,
+};
+
+enum dai_3_mode{
+    DAI_3_MODE_DISABLE = 0,
+    DAI_3_MODE_SLAVE = 1,
+    DAI_3_MODE_MASTER = 2,
+};
+
+enum dai_3_clk_src{
+    DAI_3_CLK_SRC_DISABLE = 0,
+    DAI_3_CLK_SRC_MCLK = 1,
+    DAI_3_CLK_SRC_INTERNAL = 2,
+    DAI_3_CLK_SRC_DAI_0 = 3,
+};
+
+enum dai_3_clk{
+    DAI_3_CLK_16K = 0,
+    DAI_3_CLK_32K = 1,
+    DAI_3_CLK_48K = 2,
+};
+
+enum dai_3_data_bit{
+    DAI_3_DATA_BIT_32 = 0,
+    DAI_3_DATA_BIT_16 = 1,
+};
+
+enum dmic_m_clk_src{
+    DMIC_M_CLK_SRC_DMIC_S = 0,
+    DMIC_M_CLK_SRC_MCLK = 1,
+    DMIC_M_CLK_SRC_INTERNAL = 2,
+};
+
+enum dmic_m_bclk{
+    DMIC_M_BCLK_3_072M = 0,
+    DMIC_M_BCLK_2_4M = 1,
+    DMIC_M_BCLK_2_0M = 2,
+    DMIC_M_BCLK_1_625M = 3,
+    DMIC_M_BCLK_1_536M = 4,
+    DMIC_M_BCLK_1_0M = 5,
+    DMIC_M_BCLK_ADAPTIVE = 6,
+};
+
+enum dmic_s_bclk{
+    DMIC_S_BCLK_3_072M = 0,
+    DMIC_S_BCLK_2_4M = 1,
+    DMIC_S_BCLK_2_0M = 2,
+    DMIC_S_BCLK_1_625M = 3,
+    DMIC_S_BCLK_1_536M = 4,
+    DMIC_S_BCLK_1_0M = 5,
+};
+
+enum dmic_m0_p_mode{
+    DMIC_M0_P_MODE_DISABLE = 0,
+    DMIC_M0_P_MODE_ENABLE = 1,
+};
+
+enum dmic_m0_n_mode{
+    DMIC_M0_N_MODE_DISABLE = 0,
+    DMIC_M0_N_MODE_ENABLE = 1,
+};
+
+enum dmic_m1_p_mode{
+    DMIC_M1_P_MODE_DISABLE = 0,
+    DMIC_M1_P_MODE_ENABLE = 1,
+};
+
+enum dmic_m1_n_mode{
+    DMIC_M1_N_MODE_DISABLE = 0,
+    DMIC_M1_N_MODE_ENABLE = 1,
+};
+
+enum dmic_m2_p_mode{
+    DMIC_M2_P_MODE_DISABLE = 0,
+    DMIC_M2_P_MODE_ENABLE = 1,
+};
+
+enum dmic_m2_n_mode{
+    DMIC_M2_N_MODE_DISABLE = 0,
+    DMIC_M2_N_MODE_ENABLE = 1,
+};
+
+enum dmic_m3_p_mode{
+    DMIC_M3_P_MODE_DISABLE = 0,
+    DMIC_M3_P_MODE_ENABLE = 1,
+};
+
+enum dmic_m3_n_mode{
+    DMIC_M3_N_MODE_DISABLE = 0,
+    DMIC_M3_N_MODE_ENABLE = 1,
+};
+
+enum dmic_s0_p_mode{
+    DMIC_S0_P_MODE_DISABLE = 0,
+    DMIC_S0_P_MODE_ENABLE = 1,
+};
+
+enum dmic_s0_n_mode{
+    DMIC_S0_N_MODE_DISABLE = 0,
+    DMIC_S0_N_MODE_ENABLE = 1,
+};
+
+enum dmic_s1_p_mode{
+    DMIC_S1_P_MODE_DISABLE = 0,
+    DMIC_S1_P_MODE_ENABLE = 1,
+};
+
+enum dmic_s1_n_mode{
+    DMIC_S1_N_MODE_DISABLE = 0,
+    DMIC_S1_N_MODE_ENABLE = 1,
+};
+
+enum nr_ch0{
+    NR_CH0_DISABLE = 0,
+    NR_CH0_ENABLE = 1,
+};
+
+enum nr_ch1{
+    NR_CH1_DISABLE = 0,
+    NR_CH1_ENABLE = 1,
+};
+
+enum ch1_ref_mode{
+    CH1_REF_MODE_DISABLE = 0,
+    CH1_REF_MODE_MODE0 = 1,
+    CH1_REF_MODE_MODE1 = 2,
+    CH1_REF_MODE_MODE2 = 3,
+};
+
+enum ch1_ref_rx{
+    CH1_REF_RX_DISABLE = 0,
+    CH1_REF_RX_DAI0_RX_L = 1,
+    CH1_REF_RX_DAI0_RX_R = 2,
+    CH1_REF_RX_DAI1_RX_L = 3,
+    CH1_REF_RX_DAI1_RX_R = 4,
+    CH1_REF_RX_DAI2_RX_L = 5,
+    CH1_REF_RX_DAI2_RX_R = 6,
+    CH1_REF_RX_DAI3_RX_L = 7,
+    CH1_REF_RX_DAI3_RX_R = 8,
+    CH1_REF_RX_DMIC_M0_P = 9,
+    CH1_REF_RX_DMIC_M0_N = 10,
+    CH1_REF_RX_DMIC_M1_P = 11,
+    CH1_REF_RX_DMIC_M1_N = 12,
+    CH1_REF_RX_DMIC_COMBO_M0_P = 13,
+    CH1_REF_RX_DMIC_COMBO_M0_N = 14,
+};
+
+enum ch0_floor{
+    CH0_FLOOR_LVL_DEFAULT = 0,
+    CH0_FLOOR_LVL_0 = 1,
+    CH0_FLOOR_LVL_1 = 2,
+    CH0_FLOOR_LVL_2 = 3,
+    CH0_FLOOR_LVL_3 = 4,
+    CH0_FLOOR_LVL_4 = 5,
+    CH0_FLOOR_LVL_5 = 6,
+    CH0_FLOOR_LVL_6 = 7,
+    CH0_FLOOR_LVL_7 = 8,
+    CH0_FLOOR_LVL_8 = 9,
+    CH0_FLOOR_LVL_9 = 10,
+};
+
+enum ch1_floor{
+    CH1_FLOOR_LVL_DEFAULT = 0,
+    CH1_FLOOR_LVL_0 = 1,
+    CH1_FLOOR_LVL_1 = 2,
+    CH1_FLOOR_LVL_2 = 3,
+    CH1_FLOOR_LVL_3 = 4,
+    CH1_FLOOR_LVL_4 = 5,
+    CH1_FLOOR_LVL_5 = 6,
+    CH1_FLOOR_LVL_6 = 7,
+    CH1_FLOOR_LVL_7 = 8,
+    CH1_FLOOR_LVL_8 = 9,
+    CH1_FLOOR_LVL_9 = 10,
+};
+
+enum ch0_od{
+    CH0_OD_LVL_DEFAULT = 0,
+    CH0_OD_LVL_0 = 1,
+    CH0_OD_LVL_1 = 2,
+    CH0_OD_LVL_2 = 3,
+    CH0_OD_LVL_3 = 4,
+    CH0_OD_LVL_4 = 5,
+    CH0_OD_LVL_5 = 6,
+};
+
+enum ch1_od{
+    CH1_OD_LVL_DEFAULT = 0,
+    CH1_OD_LVL_0 = 1,
+    CH1_OD_LVL_1 = 2,
+    CH1_OD_LVL_2 = 3,
+    CH1_OD_LVL_3 = 4,
+    CH1_OD_LVL_4 = 5,
+    CH1_OD_LVL_5 = 6,
+};
+
+enum ch0_thr{
+    CH0_THR_LVL_DEFAULT = 0,
+    CH0_THR_LVL_0 = 1,
+    CH0_THR_LVL_1 = 2,
+    CH0_THR_LVL_2 = 3,
+    CH0_THR_LVL_3 = 4,
+    CH0_THR_LVL_4 = 5,
+    CH0_THR_LVL_5 = 6,
+    CH0_THR_LVL_6 = 7,
+    CH0_THR_LVL_7 = 8,
+    CH0_THR_LVL_8 = 9,
+    CH0_THR_LVL_9 = 10,
+};
+
+enum ch1_thr{
+    CH1_THR_LVL_DEFAULT = 0,
+    CH1_THR_LVL_0 = 1,
+    CH1_THR_LVL_1 = 2,
+    CH1_THR_LVL_2 = 3,
+    CH1_THR_LVL_3 = 4,
+    CH1_THR_LVL_4 = 5,
+    CH1_THR_LVL_5 = 6,
+    CH1_THR_LVL_6 = 7,
+    CH1_THR_LVL_7 = 8,
+    CH1_THR_LVL_8 = 9,
+    CH1_THR_LVL_9 = 10,
+};
+
+enum hw_bypass_dai_0{
+    HW_BYPASS_DAI_0_DISABLE = 0,
+    HW_BYPASS_DAI_0_ENABLE = 1,
+};
+
+enum hw_bypass_dmic_s0{
+    HW_BYPASS_DMIC_S0_DISABLE = 0,
+    HW_BYPASS_DMIC_S0_ENABLE = 1,
+};
+
+enum sw_bypass_0_rx{
+    SW_BYPASS_0_RX_DISABLE = 0,
+    SW_BYPASS_0_RX_DAI0_RX_L = 1,
+    SW_BYPASS_0_RX_DAI0_RX_R = 2,
+    SW_BYPASS_0_RX_DAI1_RX_L = 3,
+    SW_BYPASS_0_RX_DAI1_RX_R = 4,
+    SW_BYPASS_0_RX_DAI2_RX_L = 5,
+    SW_BYPASS_0_RX_DAI2_RX_R = 6,
+    SW_BYPASS_0_RX_DAI3_RX_L = 7,
+    SW_BYPASS_0_RX_DAI3_RX_R = 8,
+    SW_BYPASS_0_RX_DMIC_M0_P = 9,
+    SW_BYPASS_0_RX_DMIC_M0_N = 10,
+    SW_BYPASS_0_RX_DMIC_M1_P = 11,
+    SW_BYPASS_0_RX_DMIC_M1_N = 12,
+    SW_BYPASS_0_RX_DMIC_COMBO_M0_P = 13,
+    SW_BYPASS_0_RX_DMIC_COMBO_M0_N = 14,
+};
+
+enum sw_bypass_0_tx{
+    SW_BYPASS_0_TX_DISABLE = 0,
+    SW_BYPASS_0_TX_DAI0_TX_L = 1,
+    SW_BYPASS_0_TX_DAI0_TX_R = 2,
+    SW_BYPASS_0_TX_DAI1_TX_L = 3,
+    SW_BYPASS_0_TX_DAI1_TX_R = 4,
+    SW_BYPASS_0_TX_DAI2_TX_L = 5,
+    SW_BYPASS_0_TX_DAI2_TX_R = 6,
+    SW_BYPASS_0_TX_DAI3_TX_L = 7,
+    SW_BYPASS_0_TX_DAI3_TX_R = 8,
+    SW_BYPASS_0_TX_DMIC_S0_P = 9,
+    SW_BYPASS_0_TX_DMIC_S0_N = 10,
+    SW_BYPASS_0_TX_DMIC_S1_P = 11,
+    SW_BYPASS_0_TX_DMIC_S1_N = 12,
+    SW_BYPASS_0_TX_DMIC_COMBO_S0_P = 13,
+    SW_BYPASS_0_TX_DMIC_COMBO_S0_N = 14,
+};
+
+enum sw_bypass_1_rx{
+    SW_BYPASS_1_RX_DISABLE = 0,
+    SW_BYPASS_1_RX_DAI0_RX_L = 1,
+    SW_BYPASS_1_RX_DAI0_RX_R = 2,
+    SW_BYPASS_1_RX_DAI1_RX_L = 3,
+    SW_BYPASS_1_RX_DAI1_RX_R = 4,
+    SW_BYPASS_1_RX_DAI2_RX_L = 5,
+    SW_BYPASS_1_RX_DAI2_RX_R = 6,
+    SW_BYPASS_1_RX_DAI3_RX_L = 7,
+    SW_BYPASS_1_RX_DAI3_RX_R = 8,
+    SW_BYPASS_1_RX_DMIC_M0_P = 9,
+    SW_BYPASS_1_RX_DMIC_M0_N = 10,
+    SW_BYPASS_1_RX_DMIC_M1_P = 11,
+    SW_BYPASS_1_RX_DMIC_M1_N = 12,
+    SW_BYPASS_1_RX_DMIC_COMBO_M0_P = 13,
+    SW_BYPASS_1_RX_DMIC_COMBO_M0_N = 14,
+};
+
+enum sw_bypass_1_tx{
+    SW_BYPASS_1_TX_DISABLE = 0,
+    SW_BYPASS_1_TX_DAI0_TX_L = 1,
+    SW_BYPASS_1_TX_DAI0_TX_R = 2,
+    SW_BYPASS_1_TX_DAI1_TX_L = 3,
+    SW_BYPASS_1_TX_DAI1_TX_R = 4,
+    SW_BYPASS_1_TX_DAI2_TX_L = 5,
+    SW_BYPASS_1_TX_DAI2_TX_R = 6,
+    SW_BYPASS_1_TX_DAI3_TX_L = 7,
+    SW_BYPASS_1_TX_DAI3_TX_R = 8,
+    SW_BYPASS_1_TX_DMIC_S0_P = 9,
+    SW_BYPASS_1_TX_DMIC_S0_N = 10,
+    SW_BYPASS_1_TX_DMIC_S1_P = 11,
+    SW_BYPASS_1_TX_DMIC_S1_N = 12,
+    SW_BYPASS_1_TX_DMIC_COMBO_S0_P = 13,
+    SW_BYPASS_1_TX_DMIC_COMBO_S0_N = 14,
+};
+
+enum aec{
+    AEC_DISABLE = 0,
+    AEC_ENABLE = 1,
+};
+
+enum aec_ref_rx{
+    AEC_REF_RX_DISABLE = 0,
+    AEC_REF_RX_CH0_TX = 1,
+    AEC_REF_RX_DAI0_RX_L = 2,
+    AEC_REF_RX_DAI0_RX_R = 3,
+    AEC_REF_RX_DAI1_RX_L = 4,
+    AEC_REF_RX_DAI1_RX_R = 5,
+    AEC_REF_RX_DAI2_RX_L = 6,
+    AEC_REF_RX_DAI2_RX_R = 7,
+    AEC_REF_RX_DAI3_RX_L = 8,
+    AEC_REF_RX_DAI3_RX_R = 9,
+    AEC_REF_RX_DMIC_M0_P = 10,
+    AEC_REF_RX_DMIC_M0_N = 11,
+    AEC_REF_RX_DMIC_M1_P = 12,
+    AEC_REF_RX_DMIC_M1_N = 13,
+    AEC_REF_RX_DMIC_COMBO_M0_P = 14,
+    AEC_REF_RX_DMIC_COMBO_M0_N = 15,
+};
+
+enum vad_status{
+    VAD_STATUS_STANDBY = 0,
+    VAD_STATUS_TRIGGERED = 1,
+};
+
+enum vad_clear{
+    VAD_CLEAR_NOP = 0,
+    VAD_CLEAR_ENABLE = 1,
+};
+
+enum vad_int_mod{
+    VAD_INT_MOD_DISABLE = 0,
+    VAD_INT_MOD_EDGE = 1,
+    VAD_INT_MOD_LEVEL = 2,
+};
+
+enum vad_int_pin{
+    VAD_INT_PIN_DAI0_BCLK = 0,
+    VAD_INT_PIN_DAI0_LRCLK = 1,
+    VAD_INT_PIN_DAI0_RXDAT = 2,
+    VAD_INT_PIN_DAI0_TXDAT = 3,
+    VAD_INT_PIN_DAI1_BCLK = 4,
+    VAD_INT_PIN_DAI1_LRCLK = 5,
+    VAD_INT_PIN_DAI1_RXDAT = 6,
+    VAD_INT_PIN_DAI1_TXDAT = 7,
+    VAD_INT_PIN_DAI2_BCLK = 8,
+    VAD_INT_PIN_DAI2_LRCLK = 9,
+    VAD_INT_PIN_DAI2_RXDAT = 10,
+    VAD_INT_PIN_DAI2_TXDAT = 11,
+    VAD_INT_PIN_DAI3_BCLK = 12,
+    VAD_INT_PIN_DAI3_LRCLK = 13,
+    VAD_INT_PIN_DAI3_RXDAT = 14,
+    VAD_INT_PIN_DAI3_TXDAT = 15,
+};
+
+enum vad_keyword{
+    VAD_KEYWORD_KEY_0 = 0,
+    VAD_KEYWORD_KEY_1 = 1,
+    VAD_KEYWORD_KEY_2 = 2,
+    VAD_KEYWORD_KEY_3 = 3,
+    VAD_KEYWORD_KEY_4 = 4,
+    VAD_KEYWORD_KEY_5 = 5,
+    VAD_KEYWORD_KEY_6 = 6,
+    VAD_KEYWORD_KEY_7 = 7,
+};
+
+enum vad_key_group_sel{
+    VAD_KEY_GROUP_SEL_GROUP_0 = 0,
+    VAD_KEY_GROUP_SEL_GROUP_1 = 1,
+    VAD_KEY_GROUP_SEL_GROUP_2 = 2,
+    VAD_KEY_GROUP_SEL_GROUP_3 = 3,
+};
+
+enum vad_voice_enhance{
+    VAD_VOICE_ENHANCE_DISABLE = 0,
+    VAD_VOICE_ENHANCE_ENABLE = 1,
+};
+
+enum vad_voice_enroll{
+    VAD_VOICE_ENROLL_DISABLE = 0,
+    VAD_VOICE_ENROLL_ENROLL = 1,
+};
+
+enum vad_enroll_cnt{
+    VAD_ENROLL_CNT_CNT_0 = 0,
+    VAD_ENROLL_CNT_CNT_1 = 1,
+    VAD_ENROLL_CNT_CNT_2 = 2,
+    VAD_ENROLL_CNT_CNT_3 = 3,
+    VAD_ENROLL_CNT_CNT_4 = 4,
+    VAD_ENROLL_CNT_ENROLL_DONE = 5,
+};
+
+enum vad_enroll_apply{
+    VAD_ENROLL_APPLY_DISABLE = 0,
+    VAD_ENROLL_APPLY_APLLY = 1,
+};
+
+enum vad_enroll_rst{
+    VAD_ENROLL_RST_DISABLE = 0,
+    VAD_ENROLL_RST_ENROLL_RST = 1,
+};
+
+enum vad_keyword_hit_clear{
+    VAD_KEYWORD_HIT_CLEAR_NOP = 0,
+    VAD_KEYWORD_HIT_CLEAR_ENABLE = 1,
+};
+
+/////////////////////////////////////////////////////////////////////////
+enum scenarious_sel{
+    SCENARIOUS_SEL_STANDBY = 0,
+    SCENARIOUS_SEL_HANDSET_0 = 1,
+    SCENARIOUS_SEL_HANDSET_1 = 2,
+    SCENARIOUS_SEL_HANDSET_2 = 3,
+    SCENARIOUS_SEL_HANDFREE_0 = 4,
+    SCENARIOUS_SEL_HANDFREE_1 = 5,
+    SCENARIOUS_SEL_HANDFREE_2 = 6,
+    SCENARIOUS_SEL_HEADSET_0 = 7,
+    SCENARIOUS_SEL_HEADSET_1 = 8,
+    SCENARIOUS_SEL_HEADSET_2 = 9,
+    SCENARIOUS_SEL_VOICE_REC_0 = 10,
+    SCENARIOUS_SEL_VOICE_REC_1 = 11,
+    SCENARIOUS_SEL_VOICE_REC_2 = 12,
+    SCENARIOUS_SEL_VIDEO_REC_0 = 13,
+    SCENARIOUS_SEL_VIDEO_REC_1 = 14,
+    SCENARIOUS_SEL_VIDEO_REC_2 = 15,
+    SCENARIOUS_SEL_ASR_0 = 16,
+    SCENARIOUS_SEL_ASR_1 = 17,
+    SCENARIOUS_SEL_ASR_2 = 18,
+    SCENARIOUS_SEL_BYPASS_0 = 19,
+    SCENARIOUS_SEL_BYPASS_1 = 20,
+    SCENARIOUS_SEL_BYPASS_2 = 21,
+    SCENARIOUS_SEL_RESERVED_0 = 22,
+    SCENARIOUS_SEL_RESERVED_1 = 23,
+    SCENARIOUS_SEL_RESERVED_2 = 24,
+};
+
+void debussy_add_codec_controls(struct snd_soc_codec* codec);
+
+
+#endif
