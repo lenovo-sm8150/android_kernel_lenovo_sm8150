@@ -38,6 +38,8 @@ ifeq ($(KERNEL_BUILD), 0)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm8150autoconf.h
+		CIRRUS_KERN_INC := -I$(ANDROID_BUILD_TOP)/vendor/cirrus/modules -I$(ANDROID_BUILD_TOP)/vendor/cirrus/modules/include
+		INCS    +=  $(CIRRUS_KERN_INC)
 	endif
 	ifeq ($(CONFIG_ARCH_SM6150), y)
 		include $(AUDIO_ROOT)/config/sm6150auto.conf
@@ -58,6 +60,16 @@ ifeq ($(KERNEL_BUILD), 0)
 		include $(AUDIO_ROOT)/config/qcs405auto.conf
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/qcs405autoconf.h
+	endif
+	ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+		include $(AUDIO_ROOT)/config/tfa9874auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/tfa9874autoconf.h
+	endif
+	ifeq ($(CONFIG_PRODUCT_HEART), y)
+		include $(AUDIO_ROOT)/config/cirrus_auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/cirrus_autoconf.h
 	endif
 endif
 
