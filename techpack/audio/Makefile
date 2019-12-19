@@ -12,7 +12,13 @@ include $(srctree)/techpack/audio/config/sdxpoorwillsauto.conf
 export
 endif
 ifeq ($(CONFIG_ARCH_SM8150), y)
-include $(srctree)/techpack/audio/config/sm8150auto.conf
+-include $(srctree)/techpack/audio/config/sm8150auto.conf
+ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+    -include $(srctree)/techpack/audio/config/tfa9874auto.conf
+endif
+ifeq ($(CONFIG_PRODUCT_HEART), y)
+    -include $(srctree)/techpack/audio/config/cirrus_auto.conf
+endif
 export
 endif
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
@@ -49,6 +55,14 @@ endif
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/sm8150autoconf.h
+endif
+ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/tfa9874autoconf.h
+endif
+ifeq ($(CONFIG_PRODUCT_HEART), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/cirrus_autoconf.h
 endif
 
 obj-y += soc/
