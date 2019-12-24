@@ -222,6 +222,24 @@ config MFD_CROS_EC_SPI
 	  response time cannot be guaranteed, we support ignoring
 	  'pre-amble' bytes before the response actually starts.
 
+config MFD_MADERA
+	tristate "Cirrus Logic Madera codecs"
+	select MFD_CORE
+	select REGMAP
+	select REGMAP_IRQ
+	select MADERA_IRQ
+	select PINCTRL
+	select PINCTRL_MADERA
+	help
+	  Support for the Cirrus Logic Madera platform audio codecs
+
+config MFD_CS47L35
+	bool "Cirrus Logic CS47L35"
+	depends on MFD_MADERA
+	select PINCTRL_CS47L35
+	help
+	  Support for Cirrus Logic CS47L35 CODEC.
+
 config MFD_ASIC3
 	bool "Compaq ASIC3"
 	depends on GPIOLIB && ARM
