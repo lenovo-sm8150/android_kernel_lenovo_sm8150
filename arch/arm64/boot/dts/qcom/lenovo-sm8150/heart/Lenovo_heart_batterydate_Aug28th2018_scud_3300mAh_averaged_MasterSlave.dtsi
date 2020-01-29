@@ -1,0 +1,156 @@
+/*
+ * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+qcom,Lenovo_heart_batterydate_Aug28th2018_scud_3300mAh_averaged_MasterSlave {
+	/* #3565325_Lenovo_HEARTscud_3300mAh_averaged_MasterSlave_Aug25th2018*/
+	qcom,profile-revision = <24>;
+	qcom,max-voltage-uv = <4400000>;
+	qcom,fastchg-current-ma = <2600>;
+	qcom,jeita-fcc-ranges = <1  150  600000
+				151 450  2600000
+				451 500  1900000>;
+	qcom,jeita-fv-ranges = <1   150  4400000
+				151 450  4400000
+				451 500  4200000>;
+	qcom,step-chg-ranges = <3000000  4200000  2600000
+				4201000  4400000  1900000>;
+
+	 /* COLD = 0 DegC, HOT = 50 DegC */
+	qcom,jeita-hard-thresholds = <0x58cd 0x1C22>;
+	/* COOL = 15 DegC, WARM = 45 DegC */
+	qcom,jeita-soft-thresholds = <0x4621 0x20B8>;
+	/* COLD hys = 18 DegC, WARM hys = 43 DegC */
+	qcom,jeita-soft-hys-thresholds = <0x4206 0x20B8>;
+	qcom,jeita-soft-fcc-ua = <600000 1900000>;
+	qcom,jeita-soft-fv-uv = <4400000 4200000>;
+
+	qcom,batt-id-kohm = <100>;
+	qcom,battery-beta = <4250>;
+	qcom,therm-room-temp = <100000>;
+	qcom,fg-cc-cv-threshold-mv = <4390>;
+	qcom,nom-batt-capacity-mah = <3300>;
+	qcom,battery-type = "Lenovo_heart_batterydate_Aug28th2018_scud_3300mAh_averaged_MasterSlave";
+	qcom,therm-coefficients = <0x2318 0xd0c 0xdaf7 0xc556 0x848d>;
+	qcom,therm-center-offset = <0x70>;
+	qcom,therm-pull-up = <100>;
+	qcom,rslow-normal-coeffs = <0xa4 0x01 0x24 0x13>;
+	qcom,rslow-low-coeffs = <0xa4 0x01 0x24 0x13>;
+	qcom,checksum = <0x99F7>;
+	qcom,gui-version = "PM855GUI - 1.0.0.10";
+	qcom,fg-profile-data = [
+                 09 00 4F 00
+                 FF E5 9D E3
+                 11 DC 00 00
+                 EC BC 10 8B
+                 F9 87 FB 80
+                 25 9D 71 80
+                 1B 00 3E 00
+                 D7 12 85 05
+                 F5 FA CE 07
+                 32 00 37 EB
+                 AC ED 3F BD
+                 17 0B 06 DC
+                 5F C5 BC 1A
+                 B0 02 7F CB
+                 60 00 44 00
+                 47 00 45 00
+                 37 00 31 00
+                 35 00 3A 00
+                 3E 00 43 00
+                 41 00 60 00
+                 2F 00 3E 00
+                 45 00 3D 00
+                 36 00 6D 00
+                 58 64 46 00
+                 3C 00 3C 08
+                 60 F8 4B 00
+                 4F 08 76 10
+                 5D 10 4A 00
+                 9F 28 73 50
+                 59 68 4A 09
+                 4B 00 D8 00
+                 AC 1F 93 05
+                 35 F2 C1 05
+                 1B 1C 44 0A
+                 96 0C A2 23
+                 41 17 61 43
+                 1D 5D 69 03
+                 62 10 AC 1E
+                 C5 FE F9 02
+                 69 05 DC 1C
+                 25 02 4B 05
+                 27 0B 3C 18
+                 9B 23 83 44
+                 51 52 67 11
+                 73 1E FF ED
+                 B8 D2 6D D7
+                 D3 1C C2 C9
+                 78 04 13 BA
+                 D2 17 8B 8B
+                 DA 84 D5 A3
+                 71 A0 09 80
+                 54 02 38 05
+                 3B 03 9E FD
+                 00 F8 BC DC
+                 F6 DB F3 07
+                 52 EA A8 CC
+                 5F 18 12 F8
+                 D5 DE 30 03
+                 33 06 09 02
+                 CE 07 32 00
+                 CB 02 4F 03
+                 58 04 D8 01
+                 34 05 8D 02
+                 01 02 6F 03
+                 77 05 47 00
+                 39 00 40 00
+                 44 64 4A 00
+                 47 F8 46 00
+                 49 F0 46 00
+                 4B 00 46 10
+                 43 10 3D 00
+                 4F 28 50 48
+                 5E 60 72 0C
+                 49 00 59 00
+                 5A 00 62 F8
+                 55 00 4B 00
+                 4D 10 5E 10
+                 56 00 6F 28
+                 88 48 4F 60
+                 64 0B 6E 00
+                 71 00 54 08
+                 D8 F8 76 1F
+                 BD 04 43 0B
+                 E7 0C DC 1C
+                 32 23 D5 45
+                 45 52 77 18
+                 36 02 49 05
+                 4F 02 67 10
+                 3F 0A 37 1F
+                 4F 06 AD 03
+                 F7 05 9B 1C
+                 AB 03 41 05
+                 18 03 58 18
+                 57 02 E3 04
+                 E0 02 5D 00
+                 AC 1F B2 05
+                 57 02 FB 04
+                 EA 1C 11 02
+                 B7 05 82 02
+                 A6 18 3C 03
+                 FA 04 E6 03
+                 79 00 83 01
+                 C0 00 FA 00
+                 D7 0C 00 00
+		 ];
+};

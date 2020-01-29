@@ -1,0 +1,16 @@
+&pm8150l_lpg {
+	qcom,lut-patterns = <0 14 28 42 56 70 84 100 100 84 70 56 42 28 14 0>;
+	lpg1 {
+		qcom,ramp-high-index = <15>;
+	};
+	lpg2 {
+		qcom,ramp-step-ms = <200>;
+		qcom,ramp-pause-lo-count = <15>;
+		qcom,ramp-high-index = <15>;
+	};
+	lpg3 {
+		qcom,ramp-step-ms = <200>;
+		qcom,ramp-pause-lo-count = <15>;
+		qcom,ramp-high-index = <15>;
+	};
+};

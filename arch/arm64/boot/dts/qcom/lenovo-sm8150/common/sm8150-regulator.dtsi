@@ -1,0 +1,3 @@
+&pm8150l_l9 {
+	qcom,init-voltage = <2960000>;
+};

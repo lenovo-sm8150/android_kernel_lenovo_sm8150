@@ -1,0 +1,139 @@
+/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&mdss_mdp {
+	dsi_tianma_nt37700_amoled_cmd: qcom,mdss_dsi_tianma_nt37700_amoled_cmd {
+		qcom,mdss-dsi-panel-name =
+			"nt37700 cmd mode dsi tianma panel with DSC xxx";
+		qcom,mdss-dsi-panel-type = "dsi_cmd_mode";
+		qcom,mdss-dsi-virtual-channel-id = <0>;
+		qcom,mdss-dsi-stream = <0>;
+		qcom,mdss-pan-physical-width-dimension = <68>;
+		qcom,mdss-pan-physical-height-dimension = <147>;
+		qcom,mdss-dsi-bpp = <24>;
+
+		qcom,mdss-dsi-underflow-color = <0xff>;
+		qcom,mdss-dsi-border-color = <0>;
+		qcom,mdss-dsi-lane-map = "lane_map_0123";
+		qcom,mdss-dsi-traffic-mode = "burst_mode";
+		qcom,mdss-dsi-bllp-eof-power-mode;
+		qcom,mdss-dsi-bllp-power-mode;
+		qcom,mdss-dsi-lane-0-state;
+		qcom,mdss-dsi-lane-1-state;
+		qcom,mdss-dsi-lane-2-state;
+		qcom,mdss-dsi-lane-3-state;
+		qcom,mdss-dsi-dma-trigger = "trigger_sw";
+		qcom,mdss-dsi-mdp-trigger = "none";
+		qcom,mdss-dsi-reset-sequence = <0 3>, <1 12>;
+		qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
+		qcom,mdss-dsi-bl-min-level = <1>;
+		qcom,mdss-dsi-bl-max-level = <2047>;
+		qcom,mdss-brightness-max-level = <2047>;
+		//qcom,adjust-timer-wakeup-ms = <1>;
+		qcom,mdss-dsi-t-clk-post = <0x19>;
+		qcom,mdss-dsi-t-clk-pre = <0x1c>;
+		qcom,mdss-dsi-wr-mem-start = <0x2c>;
+		qcom,mdss-dsi-wr-mem-continue = <0x3c>;
+		qcom,mdss-dsi-te-pin-select = <1>;
+		qcom,mdss-dsi-te-dcs-command = <1>;
+		qcom,mdss-dsi-te-check-enable;
+		qcom,mdss-dsi-te-using-te-pin;
+		qcom,mdss-dsi-lp11-init;
+		//qcom,mdss-dsi-tx-eot-append;
+		qcom,mdss-dsi-h-sync-pulse = <0>;
+		qcom,mdss-dsi-display-timings {
+			timing@0{
+				qcom,mdss-dsi-panel-width = <1080>;
+				qcom,mdss-dsi-panel-height = <2340>;
+				qcom,mdss-dsi-panel-framerate = <60>;
+				qcom,mdss-dsi-panel-clockrate = <1094000000>;
+				qcom,mdss-dsi-h-front-porch = <100>;
+				qcom,mdss-dsi-h-back-porch = <100>;
+				qcom,mdss-dsi-h-pulse-width = <10>;
+				qcom,mdss-dsi-h-sync-skew = <0>;
+				qcom,mdss-dsi-v-back-porch = <4>;
+				qcom,mdss-dsi-v-front-porch = <8>;
+				qcom,mdss-dsi-v-pulse-width = <4>;
+				qcom,mdss-dsi-h-left-border = <0>;
+				qcom,mdss-dsi-h-right-border = <0>;
+				qcom,mdss-dsi-v-top-border = <0>;
+				qcom,mdss-dsi-v-bottom-border = <0>;
+				//qcom,mdss-dsi-panel-jitter = <0x1 0x1>;
+				qcom,mdss-dsi-on-command = [
+					39 01 00 00 00 00 06 F0 55 AA 52 08 07
+					39 01 00 00 00 00 12 c0 77 88 74 55 1e aa 8d 8a 20 4b 53 3c 08 09 09 01 c9
+					39 01 00 00 00 00 11 c1 31 29 27 26 24 24 24 23 23 22 23 22 22 22 22 22
+					39 01 00 00 00 00 11 c2 22 21 22 21 22 21 21 21 22 21 21 21 21 21 22 02
+					39 01 00 00 00 00 11 c3 21 21 21 22 02 21 22 02 21 22 02 22 02 22 02 22
+					39 01 00 00 00 00 11 c4 02 22 02 22 02 23 03 03 22 02 23 03 03 23 03 03
+					39 01 00 00 00 00 11 c5 24 04 04 04 24 04 04 04 24 04 04 04 26 06 06 06
+					39 01 00 00 00 00 11 c6 06 06 27 07 07 07 07 07 07 29 09 09 09 09 09 09
+					39 01 00 00 00 00 11 c7 09 09 31 11 11 11 11 11 11 11 11 11 11 11 11 11
+					39 01 00 00 00 00 11 c8 11 11 11 36 16 16 16 16 16 16 16 16 16 16 16 16
+					39 01 00 00 00 00 11 c9 16 16 16 16 16 16 16 16 16 00 00 00 00 00 00 00
+					39 01 00 00 00 00 11 d0 3e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e
+					39 01 00 00 00 00 11 d1 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 1e 38 18
+					39 01 00 00 00 00 11 d2 18 18 18 18 18 18 18 18 18 18 18 18 18 18 18 18
+					39 01 00 00 00 00 11 d3 18 18 18 18 18 18 2f 0f 0f 0f 0f 0f 0f 0f 0f 0f
+					39 01 00 00 00 00 11 d4 0f 0f 0f 0f 0f 26 06 06 06 06 06 25 05 05 05 05
+					39 01 00 00 00 00 11 d5 24 04 04 04 23 03 03 23 03 03 23 03 03 23 03 03
+					39 01 00 00 00 00 11 d6 22 02 23 03 03 22 02 22 02 22 02 22 02 22 02 21
+					39 01 00 00 00 00 11 d7 22 02 22 02 21 22 02 21 22 02 21 21 22 02 21 21
+					39 01 00 00 00 00 11 d8 21 21 21 22 02 21 21 21 21 21 22 21 21 21 21 21
+					39 01 00 00 00 00 11 d9 22 21 21 22 21 22 21 22 22 21 22 22 22 22 22 23
+					39 01 00 00 00 00 11 dd 22 23 23 23 23 24 25 26 2f 38 00 00 00 00 00 00
+					39 01 00 00 00 00 11 e2 28 23 22 22 21 21 21 21 22 02 21 23 03 03 26 06
+					39 01 00 00 00 00 11 e3 06 06 06 06 27 07 07 07 07 07 07 25 05 05 05 05
+					39 01 00 00 00 00 11 e4 23 03 03 22 02 23 03 03 22 02 22 02 22 02 21 22
+					39 01 00 00 00 00 11 e5 02 22 02 21 21 21 22 02 21 21 21 21 22 21 21 22
+					39 01 00 00 00 00 11 e6 21 22 21 22 22 22 23 22 23 24 2a 00 00 00 00 00
+					39 01 00 00 00 00 05 FF AA 55 A5 81
+					39 01 00 00 00 00 02 6F 07
+					39 01 00 00 00 00 02 F3 07
+					39 01 00 00 00 00 02 6F 05
+					39 01 00 00 00 00 02 F3 21
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					39 01 00 00 00 00 02 6F 06
+					39 01 00 00 00 00 0C B5 2B 26 00 00 00 2B 26 00 00 00 00
+					39 01 00 00 00 00 02 B2 08
+					39 01 00 00 00 00 02 6F 02
+					39 01 00 00 00 00 03 B2 20 20
+					39 01 00 00 00 00 05 3B 00 08 00 08
+					39 01 00 00 00 00 02 90 01
+					39 01 00 00 00 00 03 51 07 FF
+					15 01 00 00 00 00 02 53 28
+					15 01 00 00 00 00 02 35 00
+					39 01 00 00 00 00 05 2A 00 00 04 37
+					39 01 00 00 00 00 05 2B 00 00 09 23
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					15 01 00 00 00 00 02 6F 06
+					15 01 00 00 00 00 02 C3 04
+					05 01 00 00 78 00 01 11
+					05 01 00 00 00 00 01 29];
+				qcom,mdss-dsi-off-command = [
+					05 01 00 00 14 00 01 28
+					05 01 00 00 78 00 01 10];
+				qcom,mdss-dsi-hbm-on-command = [
+					15 01 00 00 00 00 02 53 20
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					39 01 00 00 00 00 1F B4 00 00 00 00 00 00 00 00 00 00 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47
+					39 01 00 00 00 00 03 51 0F FF];
+				qcom,mdss-dsi-hbm-off-command = [
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					39 01 00 00 00 00 1F B4 98 77 55 44 33 33 33 33 33 33 30 52 35 03 E6 E6 C9 C9 AC AC AC AC AC AC AC AC AC AC AC 84];
+				qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-off-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-force-tx-mode = "dsi_hs_mode";
+			};
+		};
+	};
+};

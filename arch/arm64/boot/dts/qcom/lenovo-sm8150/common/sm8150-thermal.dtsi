@@ -1,0 +1,62 @@
+&thermal_zones {
+	 cpu-1-7-lowf {
+		 cooling-maps {
+		 /delete-node/ cpu0_cdev;
+		 /delete-node/ cpu1_cdev;
+		 /delete-node/ cx_vdd_cdev;
+		 /delete-node/ mx_vdd_cdev;
+		 /delete-node/ ebi_vdd_cdev;
+		 /delete-node/ mmcx_vdd_cdev;
+		 /delete-node/ modem_vdd_cdev;
+		 /delete-node/ adsp_vdd_cdev;
+		 /delete-node/ cdsp_vdd_cdev;
+		 /delete-node/ slpi_vdd_cdev;
+		 /delete-node/ gpu_vdd_cdev;
+		};
+	 };
+	 gpuss-0-lowf {
+		 cooling-maps {
+		 /delete-node/ cpu0_cdev;
+		 /delete-node/ cpu1_cdev;
+		 /delete-node/ cx_vdd_cdev;
+		 /delete-node/ mx_vdd_cdev;
+		 /delete-node/ ebi_vdd_cdev;
+		 /delete-node/ mmcx_vdd_cdev;
+		 /delete-node/ modem_vdd_cdev;
+		 /delete-node/ adsp_vdd_cdev;
+		 /delete-node/ cdsp_vdd_cdev;
+		 /delete-node/ slpi_vdd_cdev;
+		 /delete-node/ gpu_vdd_cdev;
+		};
+	 };
+	 camera-lowf {
+		 cooling-maps {
+		 /delete-node/ cpu0_cdev;
+		 /delete-node/ cpu1_cdev;
+		 /delete-node/ cx_vdd_cdev;
+		 /delete-node/ mx_vdd_cdev;
+		 /delete-node/ ebi_vdd_cdev;
+		 /delete-node/ mmcx_vdd_cdev;
+		 /delete-node/ modem_vdd_cdev;
+		 /delete-node/ adsp_vdd_cdev;
+		 /delete-node/ cdsp_vdd_cdev;
+		 /delete-node/ slpi_vdd_cdev;
+		 /delete-node/ gpu_vdd_cdev;
+		};
+	 };
+	 mdm-scl-lowf {
+		 cooling-maps {
+		 /delete-node/ cpu0_cdev;
+		 /delete-node/ cpu1_cdev;
+		 /delete-node/ cx_vdd_cdev;
+		 /delete-node/ mx_vdd_cdev;
+		 /delete-node/ ebi_vdd_cdev;
+		 /delete-node/ mmcx_vdd_cdev;
+		 /delete-node/ modem_vdd_cdev;
+		 /delete-node/ adsp_vdd_cdev;
+		 /delete-node/ cdsp_vdd_cdev;
+		 /delete-node/ slpi_vdd_cdev;
+		 /delete-node/ gpu_vdd_cdev;
+		};
+	 };
+};

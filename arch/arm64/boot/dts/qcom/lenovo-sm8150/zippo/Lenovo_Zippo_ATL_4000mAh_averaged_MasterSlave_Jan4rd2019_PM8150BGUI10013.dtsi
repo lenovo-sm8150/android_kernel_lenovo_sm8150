@@ -1,0 +1,144 @@
+
+qcom,Lenovo_Zippo_ATL_4000mAh_averaged_MasterSlave_Jan4rd2019 {
+	qcom,profile-revision = <24>;
+	/* #Lenovo_Zippo_ATL_4000mAh_averaged_MasterSlave_Jan4rd2019*/
+	qcom,max-voltage-uv = <4430000>;
+	qcom,fg-cc-cv-threshold-mv = <4420>;
+	qcom,nom-batt-capacity-mah = <4000>;
+	qcom,fastchg-current-ma = <3600>;
+        qcom,jeita-fcc-ranges = <1  150  800000
+                                151 450  3600000
+                                451 500  2000000>;
+        qcom,jeita-fv-ranges = <1   150  4420000
+                                151 450  4420000
+                                451 500  4200000>;
+        qcom,step-chg-ranges = <3000000  4200000  3600000
+                                4201000  4420000  2700000>;
+
+	/* COLD = 0 DegC, HOT = 50 DegC */
+        qcom,jeita-hard-thresholds = <0x58cd 0x1C22>;
+        /* COOL = 15 DegC, WARM = 45 DegC */
+        qcom,jeita-soft-thresholds = <0x4621 0x20B8>;
+        /* COLD hys = 18 DegC, WARM hys = 43 DegC */
+        qcom,jeita-soft-hys-thresholds = <0x4206 0x20B8>;
+        qcom,jeita-soft-fcc-ua = <800000 2000000>;
+        qcom,jeita-soft-fv-uv = <4420000 4200000>;
+
+	qcom,batt-id-kohm = <10>;
+	qcom,battery-beta = <4250>;
+	qcom,therm-room-temp = <100000>;
+	qcom,battery-type = "Lenovo_Zippo_ATL_4000mAh_averaged_MasterSlave_Jan4rd2019";
+	qcom,therm-coefficients = <0x2318 0xd0c 0xdaf7 0xc556 0x848d>;
+	qcom,therm-center-offset = <0x70>;
+	qcom,therm-pull-up = <100>;
+	qcom,rslow-normal-coeffs = <0x53 0x07 0x97 0x0b>;
+	qcom,rslow-low-coeffs = <0x04 0x05 0xec 0x0a>;
+	qcom,checksum = <0x1FA4>;
+	qcom,gui-version = "PM855GUI - 1.0.0.13";
+	qcom,fg-profile-data = [
+		 09 00 86 EA
+		 6E E5 51 EA
+		 76 E5 00 00
+		 59 BD 18 8A
+		 FE 87 34 82
+		 6D 9D 64 80
+		 15 00 53 07
+		 97 0B 05 F4
+		 8B EB CE 07
+		 32 00 BD EA
+		 C1 07 C7 D2
+		 01 12 B8 CD
+		 F7 C5 2E 1B
+		 DE 02 C9 CD
+		 60 00 58 00
+		 4A 00 40 00
+		 32 00 34 00
+		 36 00 40 00
+		 42 00 44 00
+		 40 00 60 00
+		 37 00 46 00
+		 50 00 47 00
+		 3F 00 6C 00
+		 63 64 50 00
+		 45 00 3E 08
+		 60 00 53 00
+		 54 00 64 08
+		 58 10 4A 00
+		 85 20 68 40
+		 57 58 4E 0F
+		 45 00 D8 00
+		 2F 20 A5 0C
+		 54 FB 7E 05
+		 A4 1C D5 0A
+		 20 0C 2B 22
+		 FF 18 18 43
+		 DD 5C 37 02
+		 6E 10 7C 1F
+		 A3 05 8F 0A
+		 67 04 E5 1C
+		 09 02 93 05
+		 DD 02 02 18
+		 CB 23 52 44
+		 73 52 71 12
+		 7C 20 AB EC
+		 30 D3 A8 CD
+		 FA 1C 61 A1
+		 F0 05 B1 BA
+		 F0 17 72 8B
+		 02 85 8B A3
+		 8F A8 09 80
+		 55 E2 99 05
+		 B7 FB A5 03
+		 00 00 FE DC
+		 C9 E3 F3 07
+		 09 C3 D9 B5
+		 5F 10 10 F0
+		 34 CD B9 03
+		 BD 05 1F 01
+		 CE 07 32 00
+		 61 01 13 02
+		 12 05 5E 02
+		 72 04 B6 02
+		 75 02 4D 02
+		 36 05 56 00
+		 35 00 41 00
+		 47 64 4D 00
+		 4B 00 4A 08
+		 4C 00 49 00
+		 4C 00 4A 10
+		 42 10 3B 00
+		 4E 28 53 48
+		 5F 60 74 0A
+		 51 00 5A 00
+		 5E 08 60 00
+		 51 00 43 00
+		 3F 10 4B 10
+		 4B 00 5F 28
+		 6F 48 4E 58
+		 56 0D 56 00
+		 51 00 3F 08
+		 D8 00 B9 1F
+		 D1 05 3F 0A
+		 8A 0E E3 1C
+		 1C 23 D6 45
+		 5C 52 64 18
+		 AB 02 12 04
+		 FB 03 67 10
+		 3F 0A EC 1F
+		 43 05 E0 02
+		 D6 05 B1 1C
+		 67 03 8C 05
+		 BF 02 6F 18
+		 13 02 91 05
+		 F9 03 65 00
+		 65 20 B9 04
+		 4B 03 6E 05
+		 E6 1C 41 02
+		 78 05 CE 02
+		 AA 18 38 03
+		 00 05 DE 03
+		 79 00 94 01
+		 C0 00 FA 00
+		 38 0F 00 00
+	];
+};
