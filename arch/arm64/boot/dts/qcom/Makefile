@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0
+ifeq ($(CONFIG_PRODUCT_HEART),y)
+    dtbo-$(CONFIG_ARCH_SM8150) +=  += lenovo-heart-sm8150-mtp-overlay.dtbo
+    lenovo-heart-sm8150-mtp-overlay.dtbo-base := lenovo-heart-sm8150-v2.dtb
+else ifeq ($(CONFIG_PRODUCT_ZIPPO),y)
+    dtbo-$(CONFIG_ARCH_SM8150) +=  += lenovo-zippo-sm8150-mtp-overlay.dtbo
+    lenovo-zippo-sm8150-mtp-overlay.dtbo-base := lenovo-zippo-sm8150-v2.dtb
+else
 ifeq ($(TARGET_BOARD_TYPE),auto)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SM8150) += \
@@ -584,6 +591,8 @@ dtb-$(CONFIG_ARCH_SDM429W) += sdm429-wtp.dtb\
 	sda429-wtp.dtb\
 	sda429-wdp.dtb\
 	sda429-bg-dvt2-wtp.dtb
+endif
+
 endif
 
 endif

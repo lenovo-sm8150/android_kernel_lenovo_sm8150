@@ -1,0 +1,5 @@
+&pm8150b_charger {
+	qcom,thermal-mitigation  = <3000000 2500000 1500000 900000 600000 300000>;
+	qcom,fcc-max-ua = <3000000>;
+	qcom,fv-max-uv = <4400000>;
+};
