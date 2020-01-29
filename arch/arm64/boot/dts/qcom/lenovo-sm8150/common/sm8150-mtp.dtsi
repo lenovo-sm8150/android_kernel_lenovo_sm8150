@@ -1,0 +1,68 @@
+&mtp_batterydata {
+                #include "../heart/Lenovo_heart_batterydate_Aug28th2018_scud_3300mAh_averaged_MasterSlave.dtsi"
+                #include "../zippo/Lenovo_Zippo_ATL_4000mAh_averaged_MasterSlave_Jan4rd2019_PM8150BGUI10013.dtsi"
+};
+
+
+&extcon_usb1 {
+	 status = "disabled";
+};
+
+&soc {
+
+    /delete-node/ qcom,qbt1000;
+};
+
+&snd_9360 {
+	qcom,wsa-max-devs = <1>;
+};
+
+&dsi_panel_pwr_supply_vdd_no_labibb { 
+	qcom,panel-supply-entry@1 {
+		qcom,supply-min-voltage = <1800000>;
+		qcom,supply-max-voltage = <1800000>; 
+	};
+};
+
+&sde_dsi {
+	vdd-supply = <&display_panel_avdd_eldo>;
+};
+
+&dsi_smd639_amoled_fhd_cmd {
+        qcom,panel-supply-entries = <&dsi_panel_pwr_supply_vdd_no_labibb>;
+        qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
+        qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
+        qcom,panel-mode-gpio = <&tlmm 7 0>;
+        qcom,platform-te-gpio = <&tlmm 8 0>;
+        qcom,platform-reset-gpio = <&tlmm 6 0>;
+};
+
+&dsi_tianma_nt37700_amoled_cmd {
+        qcom,panel-supply-entries = <&dsi_panel_pwr_supply_vdd_no_labibb>;
+        qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
+        qcom,mdss-dsi-mode-sel-gpio-state = "single_port";
+        qcom,panel-mode-gpio = <&tlmm 7 0>;
+        qcom,platform-te-gpio = <&tlmm 8 0>;
+        qcom,platform-reset-gpio = <&tlmm 6 0>;
+};
+
+
+&qupv3_se9_i2c {
+	nq@28 {
+	    qcom,nq-esepwr = <&tlmm 49 0x00>;
+	    qcom,clk-src = "BBCLK3";
+	    clocks = <&clock_rpmh RPMH_LN_BB_CLK3>;
+	    clock-names = "ref_clk";
+	    status = "ok";
+	};
+};
+
+
+&sdhc_2 {
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_HIGH>;
+	// delete-property status?
+};
+
+&usb1 {
+	 status = "disabled"; 
+};

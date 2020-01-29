@@ -1,0 +1,72 @@
+/*add for goodix fingerprint*/
+&tlmm {
+	goodixfp_reset {
+		goodixfp_reset_active: goodixfp_reset_active {
+			mux {
+				pins = "gpio119";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio119";
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+		};
+
+		goodixfp_reset_sleep: goodixfp_reset_sleep {
+			mux {
+				pins = "gpio119";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio119";
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+		};
+	};
+
+	goodixfp_irq {
+		goodixfp_irq_active: goodixfp_irq_active {
+			mux {
+				pins = "gpio118";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio118";
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+
+		goodixfp_irq_sleep: goodixfp_irq_sleep {
+			mux {
+				pins = "gpio118";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio118";
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+	};
+};
+
+&soc {
+	goodix_fp {
+		compatible = "goodix,fingerprint";
+		interrupt-parent = <&tlmm>;
+		fingerprint-supply = <&pm8150_l17>;
+		fp-gpio-irq = <&tlmm 118 0x00>;
+		fp-gpio-reset = <&tlmm 119 0x00>;
+		pinctrl-names = "goodixfp_active","goodixfp_sleep";
+		pinctrl-0 = <&goodixfp_reset_active &goodixfp_irq_active>;
+		pinctrl-1 = <&goodixfp_reset_sleep &goodixfp_irq_sleep>;
+		status = "okay";
+    };
+};
