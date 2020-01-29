@@ -1,0 +1,7 @@
+&wcd9360_cdc {
+	status = "disabled";
+};
+
+&wcd934x_cdc {
+	 status = "okay";
+};

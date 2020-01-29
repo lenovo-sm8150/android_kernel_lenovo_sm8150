@@ -1,0 +1,49 @@
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/clock/qcom,gcc-sm8150.h>
+#include <dt-bindings/clock/qcom,camcc-sm8150.h>
+#include <dt-bindings/clock/qcom,rpmh.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+
+#include "sm8150-mtp.dtsi"
+#include "sm8150-mtp-audio-overlay.dtsi"
+
+/ {
+	model = "MTP";
+	compatible = "qcom,sm8150-mtp", "qcom,sm8150", "qcom,mtp";
+	qcom,board-id = <8 0>;
+};
+
+#include "lenovo-sm8150/common/sm8150-sde-display.dtsi"
+#include "lenovo-sm8150/common/sm8150-mtp.dtsi"
+#include "lenovo-sm8150/heart/sm8150-mtp.dtsi"
+#include "lenovo-sm8150/heart/sm8150-pmic-overlay.dtsi"
+#include "lenovo-sm8150/common/pm8150.dtsi"
+#include "lenovo-sm8150/common/pm8150b.dtsi"
+#include "lenovo-sm8150/heart/pm8150b.dtsi"
+#include "lenovo-sm8150/common/pm8150l.dtsi"
+
+//#include "lenovo-sm8150/common/remove-sm8150-camera-sensor-mtp.dtsi" // this should be before camera overlay
+#include "lenovo-sm8150/heart/sm8150-camera-sensor-heart.dtsi"
+#include "lenovo-sm8150/common/sm8150-thermal-overlay.dtsi"
+#include "lenovo-sm8150-overlay/common/sm8150-audio-overlay.dtsi"
+#include "lenovo-sm8150-overlay/heart/sm8150-audio-overlay.dtsi"
+#include "lenovo-sm8150-overlay/heart/lenovo-heart.dtsi"
+
+
+&dsi_smd639_amoled_fhd_cmd_display {
+	qcom,dsi-display-active;
+};
