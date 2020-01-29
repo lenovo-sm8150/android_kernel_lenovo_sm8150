@@ -1,0 +1,33 @@
+&spmi_bus {
+	qcom,pm8150@0 {
+		qcom,power-on@800 {
+			interrupts = <0x0 0x8 0x0 IRQ_TYPE_NONE>,
+				     <0x0 0x8 0x1 IRQ_TYPE_NONE>,
+				     <0x0 0x8 0x3 IRQ_TYPE_NONE>,
+				     <0x0 0x8 0x4 IRQ_TYPE_NONE>,
+				     <0x0 0x8 0x5 IRQ_TYPE_NONE>;
+			interrupt-names = "kpdpwr", "resin",
+					  "kpdpwr-bark", "resin-bark", "kpdpwr-resin-bark";
+		};
+
+		qcom,pon_1 {
+			qcom,support-reset = <1>;
+			qcom,s1-timer = <10256>;
+			qcom,s2-timer = <2000>;
+			qcom,s2-type = <8>;
+			qcom,use-bark;
+		};
+
+		qcom,pon_3 {
+			qcom,pon-type = <PON_POWER_ON_TYPE_KPDPWR_RESIN>;
+			qcom,support-reset = <1>;
+			qcom,s1-timer = <6720>;
+			qcom,s2-timer = <2000>;
+			qcom,s2-type = <1>;
+			qcom,pull-up;
+			qcom,use-bark;
+		};
+
+	};
+
+};

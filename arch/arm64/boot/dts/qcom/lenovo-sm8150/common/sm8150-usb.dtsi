@@ -1,0 +1,16 @@
+&usb0 {
+	dwc3@a600000 {
+		usb-phy = <&usb2_phy0>, <&usb_nop_phy>;
+		maximum-speed = "high-speed";
+	};
+};
+
+&soc {
+	usb_nop_phy: usb_nop_phy {
+		 compatible = "usb-nop-xceiv";
+	};
+};
+
+&usb_qmp_dp_phy {
+	status = "disabled";
+};

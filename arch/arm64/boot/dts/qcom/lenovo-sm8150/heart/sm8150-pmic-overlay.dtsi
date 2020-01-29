@@ -1,0 +1,37 @@
+&pm8150_gpios {
+	madera_rtc_mclk2{
+                madera_rtc_mclk2_enable:madera_rtc_mclk2_enable{
+                       pins = "gpio3";
+                       function = "func1";
+                       bias-disable;
+                       power-source = <0>;
+                       output-low;
+               };
+                madera_rtc_mclk2_disable:madera_rtc_mclk2_disable{
+                       pins = "gpio3";
+                       function = "normal";
+                       power-source = <0>;
+                       bias-high-impedance;
+               };
+        };
+
+};
+
+&pm8150l_gpios {
+   cam_sensor_rear_dvdd_en_active: cam_sensor_rear_dvdd_en_active {
+        pins = "gpio3";
+        function = "normal";
+        power-source = <0>;
+        output-high;
+    };
+
+    cam_sensor_rear_dvdd_en_suspend: cam_sensor_rear_dvdd_en_suspend {
+        pins = "gpio3";
+        function = "normal";
+        power-source = <0>;
+        output-low;
+    };
+
+    /delete-node/ cam_sensor_eldo4;
+    /delete-node/ cam_sensor_eldo3;
+};

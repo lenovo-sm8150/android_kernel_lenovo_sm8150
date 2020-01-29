@@ -1,0 +1,41 @@
+//delete every node creeated in sm8150-camera-sensor-mtp.dtsi 
+
+&soc {
+
+    /delete-node/ qcom,camera-flash@0;
+    /delete-node/ qcom,camera-flash@1;
+    /delete-node/ qcom,camera-flash@2;
+    /delete-node/ qcom,camera-flash@3;
+    /delete-node/ qcom,camera-flash@4;
+    /delete-node/ qcom,camera-flash@5;
+    /delete-node/ qcom,camera-flash@6;
+    /delete-node/ gpio-regulator@4;
+    /delete-node/ gpio-regulator@5;
+    /delete-node/ gpio-regulator@6;
+
+};
+
+&cam_cci0 {
+    /delete-node/ qcom,cam-res-mgr;
+    /delete-node/ qcom,actuator@0;
+    /delete-node/ qcom,actuator@1;
+    /delete-node/ qcom,actuator@2;
+    /delete-node/  qcom,actuator@4;
+    /delete-node/ qcom,actuator@5;
+    /delete-node/ qcom,actuator@6;
+    /delete-node/ qcom,ois@0;
+    /delete-node/ qcom,eeprom@0;
+    /delete-node/ qcom,eeprom@1;
+    /delete-node/ qcom,eeprom@2;
+    /delete-node/ qcom,eeprom@4;
+    /delete-node/ qcom,eeprom@5;
+    /delete-node/ qcom,eeprom@6;
+    /delete-node/ qcom,cam-sensor@0;
+    /delete-node/ qcom,cam-sensor@1;
+    /delete-node/ qcom,cam-sensor@2;
+    /delete-node/ qcom,cam-sensor@3;
+    /delete-node/ qcom,cam-sensor@4;
+    /delete-node/ qcom,cam-sensor@5;
+    /delete-node/ qcom,cam-sensor@6;
+    
+};
