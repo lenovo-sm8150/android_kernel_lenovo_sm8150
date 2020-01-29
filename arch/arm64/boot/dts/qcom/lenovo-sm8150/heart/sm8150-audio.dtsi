@@ -1,0 +1,24 @@
+&snd_9360 {
+	status = "disabled";
+};
+
+&snd_934x {
+	status = "disabled";
+};
+
+//FIXME
+//&slim_aud {
+//	/delete-node/ msm_dai_slim;
+//};
+
+&qupv3_se4_i2c {
+	status = "ok";
+	fsa4480: fsa4480@42 {
+		compatible = "qcom,fsa4480-i2c";
+		reg = <0x42>;
+		fsa_codec_det-gpios = <&tlmm 42 0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&fsa_usbc_ana_en>;
+	};
+	/delete-node/  fsa4480@43;
+};

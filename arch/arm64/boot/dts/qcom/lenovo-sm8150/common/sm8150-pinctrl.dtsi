@@ -1,0 +1,147 @@
+&ts_int_suspend {
+	config {
+		bias-pull-up;
+		/delete-property/ bias-pull-down;
+	};
+};
+
+
+&ts_reset_suspend {
+	config {
+		bias-pull-up;
+		/delete-property/ bias-pull-down;
+	};
+};
+
+
+&qupv3_se6_spi_active {
+//FIXME: not needed?
+	mux {
+		pins = "gpio5", "gpio6","gpio7";
+	};
+	config {
+		pins = "gpio5", "gpio6","gpio7";
+	};
+};
+
+&qupv3_se6_spi_sleep {
+//FIXME: not needed?
+	mux {
+		pins = "gpio5", "gpio6", "gpio7";
+	};
+	config {
+		pins = "gpio5", "gpio6", "gpio7";
+	};
+};
+
+&nfc_enable_active {
+	mux {
+		pins = "gpio41", "gpio49", "gpio48";
+	};
+	config {
+		pins = "gpio41", "gpio49", "gpio48";
+	};
+};
+
+&nfc_enable_suspend {
+	mux {
+	    pins = "gpio41", "gpio49", "gpio48";
+	};
+	config {
+	     pins = "gpio41", "gpio49", "gpio48";
+	};
+};
+
+&tlmm {
+
+	cam_tof_active: cam_tof_active {
+                        mux {
+                                pins = "gpio4";
+                                function = "gpio";
+                        };
+
+                        config {
+                                pins = "gpio4";
+                                bias-pull-up; /* No PULL */
+                                drive-strength = <8>; /* 2 MA */
+                        };
+                };
+
+                cam_tof_suspend: cam_tof_suspend {
+                        mux {
+                                pins = "gpio4";
+                                function = "gpio";
+                        };
+
+                        config {
+                                pins = "gpio4";
+                                bias-pull-down; /* PULL DOWN */
+                                drive-strength = <2>; /* 2 MA */
+                        };
+                };
+
+                fsa_codec_det_n@42 {
+                        fsa_codec_det: fsa_codec_det {
+                                mux {
+                                        pins = "gpio42";
+                                        function = "gpio";
+                                };
+
+                                config {
+                                        pins = "gpio42";
+                                        drive-strength = <2>;
+                                        bias-pull-up;
+                                        output-high;
+                                };
+                        };
+                };
+};
+
+&cci0_active {
+	config {
+		drive-strength = <8>; /* 2 MA */ 
+	};
+};
+
+&cci0_suspend {
+	config {
+		drive-strength = <8>; /* 2 MA */
+	};
+};
+
+&cci1_active {
+	config {
+		drive-strength = <8>; /* 2 MA */
+	};
+};
+
+&cci1_suspend {
+	config {
+		drive-strength = <8>; /* 2 MA */
+	};
+};
+
+&cci2_active {
+	config {
+	    drive-strength = <8>; /* 2 MA */
+	};
+};
+
+&cci2_suspend {
+	config {
+		drive-strength = <8>; /* 2 MA */
+	};
+};
+
+&cci3_active {
+	config {
+		 drive-strength = <8>; /* 2 MA */
+	};
+};
+
+
+&cci3_suspend {
+	config {
+		 drive-strength = <8>; /* 2 MA */
+	};
+};
