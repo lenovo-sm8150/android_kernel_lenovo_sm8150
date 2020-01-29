@@ -1,0 +1,114 @@
+&snd_madera {
+	qcom,ext-disp-audio-rx = <1>;
+	qcom,wcn-btfm = <1>;
+	qcom,mi2s-audio-intf = <1>;
+	qcom,auxpcm-audio-intf = <1>;
+	qcom,msm-mi2s-master = <1>, <1>, <1>, <1>, <1>;
+	asoc-codec = <&stub_codec>, <&ext_disp_audio_codec>,<&debussy>;
+	asoc-codec-names = "msm-stub-codec.1",
+			   "msm-ext-disp-audio-codec-rx","debussy";
+	qcom,audio-routing =
+	    "IN2R",  "MICBIAS2B",
+	    "IN2L",  "MICBIAS2A",
+	    "IN1BL", "MICBIAS1A";
+};
+
+&soc {
+	msm-cirrus-playback {
+		compatible = "cirrus,msm-cirrus-playback";
+		usecase-names = "Playback", "Voice", "Ringtone", "Misc";
+	};
+
+	dummy_vreg: dummy_vreg {
+		compatible = "regulator-fixed";
+		status = "ok";
+		regulator-name = "dummy_vreg";
+		regulator-always-on;
+	};
+};
+
+&wcd_rst_gpio {
+	status = "disabled";
+};
+
+&slim_aud {
+	madera_codec: madera-codec {
+		status = "ok";
+		compatible = "cirrus,madera-slim-audio";
+		elemental-addr = [00 00 60 63 FA 01];
+		clock-names = "madera_clk";
+		clocks = <&clock_audio_lnbb 0>;
+	};
+};
+
+&wcd9360_cdc {
+	status = "disabled";
+};
+
+&wcd934x_cdc {
+	 status = "disabled";
+};
+
+
+&tlmm {
+	igo1201_reset_default: igo1201_reset_default {
+		config {
+			pins = "gpio89";
+			output-low;
+			bias-pull-up;
+			drive-strength = <2>;
+		};
+	};
+
+
+	aud_soc_mode_sel_default: aud_soc_mode_sel_default {
+		config {
+			pins = "gpio90";
+			output-low;
+			bias-pull-up;
+			drive-strength = <2>;
+		};
+	};
+};
+
+
+&qupv3_se11_i2c {
+	status = "ok";
+	debussy:debussy@5d {
+		status = "okay";
+		compatible = "intelligo,debussy";
+		vdebussy-supply = <&pm8150l_l8>;
+		ig,reset-gpios = <&tlmm 89 0>;
+		ig,reset-hold-time = <5>;
+		ig,reset-release-time = <50>;
+		ig,deb-gpios = <&tlmm 88 1>;
+		ig,debounce = <5>;
+		ig,mcu-hold-gpios = <&tlmm 90 0>;
+		reg = <0x5d>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <88 IRQ_TYPE_EDGE_RISING>;
+		clock-names = "igo_mclk";
+		clocks = <&clock_rpmh RPMH_RF_CLK3>;
+		debussy,power-on-delay-us = <300000>;
+		debussy,power-off-delay-us = <5000>;
+		pinctrl-names = "reset", "aud_soc_mode_sel";
+		pinctrl-0 = <&igo1201_reset_default>;
+		pinctrl-1 = <&aud_soc_mode_sel_default>;
+	};
+};
+
+&qupv3_se4_i2c {
+	status = "ok";
+	fsa4480: fsa4480@42 {
+		compatible = "qcom,fsa4480-i2c";
+		reg = <0x42>;
+		fsa_codec_det-gpios = <&tlmm 42 0>;
+		vdd-mic-bias-supply = <&pm8150l_bob>;
+		madera,rgltr-min-voltage = <3008000>;//3008000
+		madera,rgltr-max-voltage = <4000000>;
+		madera,rgltr-load-current = <2000000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&fsa_codec_det>;
+	};
+};
