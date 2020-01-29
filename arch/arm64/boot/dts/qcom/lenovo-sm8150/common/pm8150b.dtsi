@@ -1,0 +1,37 @@
+&pm8150b_charger {
+	qcom,chg-term-src = <1>;
+	qcom,chg-term-current-ma = <(-150)>;
+	qcom,usb-icl-ua = <3000000>;
+	qcom,float-option = <1>;
+};
+
+
+&pm8150b_fg {
+	qcom,hold-soc-while-full;
+	qcom,linearize-soc;
+	qcom,fg-force-load-profile;
+	qcom,fg-sys-term-current = <(-200)>;
+	qcom,fg-cutoff-voltage = <3400>;
+	qcom,fg-empty-voltage = <3000>;
+};
+
+&thermal_zones {
+	pm8150b-ibat-lvl0 {
+		 disable-thermal-zone;
+	};
+	pm8150b-ibat-lvl1 {
+		 disable-thermal-zone;
+	};
+	pm8150b-vbat-lvl0 {
+		 disable-thermal-zone;
+	};
+	pm8150b-vbat-lvl1 {
+		 disable-thermal-zone;
+	};
+	pm8150b-vbat-lvl2 {
+		 disable-thermal-zone;
+	};
+	soc {
+		 disable-thermal-zone;
+	};
+};
