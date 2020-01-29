@@ -1,0 +1,10 @@
+&thermal_zones {
+	soc {
+		cooling-maps {
+			/delete-node/ soc_cpu4;
+			/delete-node/ soc_cpu5;
+			/delete-node/ soc_cpu6;
+			/delete-node/ soc_cpu7;
+		};
+	};
+};
