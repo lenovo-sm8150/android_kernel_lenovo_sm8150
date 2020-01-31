@@ -26,6 +26,7 @@
 
 #define BL_NODE_NAME_SIZE 32
 
+
 /* Autorefresh will occur after FRAME_CNT frames. Large values are unlikely */
 #define AUTOREFRESH_MAX_FRAME_CNT 6
 
@@ -63,6 +64,89 @@ static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_CONTINUOUS_MODE,	"continuous"},
 	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
+
+#ifdef CONFIG_BRIGHTNESS_HBM
+int dsi_panel_on_hbm = 0;
+
+enum {
+	HBM_FP_DIS		= 0,
+	HBM_FP_EN		= 1,
+	HBM_SUNNY_DIS		= 14,
+	HBM_SUNNY_EN 		= 15,
+	HBM_FP_AUTO_EN	= 255
+};
+
+static int sde_backlight_device_hbm_update_status(struct backlight_device *bd)
+{
+	int brightness;
+	struct sde_connector *c_conn;
+	int bl_lvl;
+	/* struct drm_event event; */
+	int rc = 0;
+
+	if ((bd->props.power != FB_BLANK_UNBLANK) ||
+			(bd->props.state & BL_CORE_FBBLANK) ||
+			(bd->props.state & BL_CORE_SUSPENDED)) {
+		brightness = 0;
+		pr_info("hbm FB blank\n");
+		return 0;
+	}
+
+	/*
+	* 0, 1, 255--- Finger
+	* 0xF/0xE--- enable/disable for sunny mode
+	*/
+	SDE_DEBUG("brightness: %d\n", brightness);
+	brightness = bd->props.brightness;
+	switch(brightness) {
+	case HBM_FP_EN:
+		dsi_panel_on_hbm = 1;
+		bl_lvl = 1;
+		SDE_DEBUG("enable and request hbm for next panel on\n");
+		break;
+	case HBM_FP_AUTO_EN:
+		SDE_DEBUG("only request hbm for next panel on\n");
+		dsi_panel_on_hbm = 1;
+		return 0;
+	case HBM_FP_DIS:
+		dsi_panel_on_hbm = 0;
+		bl_lvl = 0;
+		break;
+	case HBM_SUNNY_EN:
+		bl_lvl = 1;
+		break;
+	case HBM_SUNNY_DIS:
+		bl_lvl = 0;
+		break;
+	default:
+		pr_info("wrong setting for hbm: %d\n", brightness);
+		return 0;
+	}
+
+	pr_info("bl hbm %s\n", bl_lvl? "on" : "off");
+	c_conn = bl_get_data(bd);
+
+	if (c_conn->ops.set_backlight_hbm) {
+/*		event.type = DRM_EVENT_SYS_BACKLIGHT;
+		event.length = sizeof(u32);
+		msm_mode_object_event_notify(&c_conn->base.base,
+				c_conn->base.dev, &event, (u8 *)&brightness); */
+		rc = c_conn->ops.set_backlight_hbm(&c_conn->base, c_conn->display, bl_lvl);
+	}
+
+	return rc;
+}
+
+static int sde_backlight_device_hbm_get_brightness(struct backlight_device *bd)
+{
+	return 0;
+}
+
+static const struct backlight_ops sde_backlight_hbm_device_ops = {
+	.update_status = sde_backlight_device_hbm_update_status,
+	.get_brightness = sde_backlight_device_hbm_get_brightness,
+};
+#endif
 
 static int sde_backlight_device_update_status(struct backlight_device *bd)
 {
@@ -148,6 +232,14 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 							display_count);
 	c_conn->bl_device = backlight_device_register(bl_node_name, dev->dev,
 			c_conn, &sde_backlight_device_ops, &props);
+
+#ifdef CONFIG_BRIGHTNESS_HBM
+	snprintf(bl_node_name, BL_NODE_NAME_SIZE, "panel%u-hbm",
+							display_count);
+
+	c_conn->bl_hdm = backlight_device_register(bl_node_name, dev->dev,
+			c_conn, &sde_backlight_hbm_device_ops, &props);
+#endif
 	if (IS_ERR_OR_NULL(c_conn->bl_device)) {
 		SDE_ERROR("Failed to register backlight: %ld\n",
 				    PTR_ERR(c_conn->bl_device));
@@ -402,6 +494,34 @@ void sde_connector_schedule_status_work(struct drm_connector *connector,
 		}
 	}
 }
+
+#ifdef CONFIG_DRM_SDE_ELVSS_DIM_OFF
+void sde_connector_schedule_read_elvss_work(struct drm_connector *connector,
+		bool en)
+{
+	struct sde_connector *c_conn;
+	struct msm_display_info info;
+	static int run_once = 0;
+
+	if (run_once == 1)
+		return;
+	pr_info("++\n");
+	c_conn = to_sde_connector(connector);
+	if (!c_conn)
+		return;
+
+	sde_connector_get_info(connector, &info);
+	if (c_conn->ops.read_elvss_volt) {
+		if (en) {
+			u32 interval = 6000;
+			run_once++;
+			/* Schedule ESD status check */
+			schedule_delayed_work(&c_conn->read_elvss_work,
+				msecs_to_jiffies(interval));
+		}
+	}
+}
+#endif
 
 static int _sde_connector_update_power_locked(struct sde_connector *c_conn)
 {
@@ -1876,6 +1996,8 @@ int sde_connector_esd_status(struct drm_connector *conn)
 	struct dsi_display *display;
 	int ret = 0;
 
+	return 0;
+
 	if (!conn)
 		return ret;
 
@@ -1948,6 +2070,31 @@ static void sde_connector_check_status_work(struct work_struct *work)
 	}
 
 	_sde_connector_report_panel_dead(conn, false);
+}
+
+static void sde_connector_read_elvss_work(struct work_struct *work)
+{
+	struct sde_connector *conn;
+	int rc = 0;
+
+	conn = container_of(to_delayed_work(work),
+			struct sde_connector, read_elvss_work);
+	if (!conn) {
+		SDE_ERROR("not able to get connector object\n");
+		return;
+	}
+
+	mutex_lock(&conn->lock);
+	if (!conn->ops.read_elvss_volt ||
+			(conn->dpms_mode != DRM_MODE_DPMS_ON)) {
+		SDE_DEBUG("dpms mode: %d\n", conn->dpms_mode);
+		mutex_unlock(&conn->lock);
+		return;
+	}
+
+	rc = conn->ops.read_elvss_volt(&conn->base, conn->display, false);
+	mutex_unlock(&conn->lock);
+
 }
 
 static const struct drm_connector_helper_funcs sde_connector_helper_ops = {
@@ -2367,6 +2514,8 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 
 	INIT_DELAYED_WORK(&c_conn->status_work,
 			sde_connector_check_status_work);
+	INIT_DELAYED_WORK(&c_conn->read_elvss_work,
+			sde_connector_read_elvss_work);
 
 	return &c_conn->base;
 
