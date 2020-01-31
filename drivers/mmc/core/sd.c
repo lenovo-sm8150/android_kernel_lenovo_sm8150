@@ -29,6 +29,11 @@
 #include "sd.h"
 #include "sd_ops.h"
 
+#ifdef CONFIG_MMC_SDHCI_MSM_BH201
+#define IC_ADD_FUNCTION  1
+#include "../drivers/mmc/host/sdhci.h"
+#endif
+
 #define UHS_SDR104_MIN_DTR	(100 * 1000 * 1000)
 #define UHS_DDR50_MIN_DTR	(50 * 1000 * 1000)
 #define UHS_SDR50_MIN_DTR	(50 * 1000 * 1000)
@@ -658,6 +663,26 @@ out:
 	return err;
 }
 
+#ifdef IC_ADD_FUNCTION
+int mmc_app_acmd42(struct mmc_card *card)
+{
+	int err;
+	struct mmc_command cmd = {0};
+
+	BUG_ON(!card);
+	BUG_ON(!card->host);
+
+	cmd.opcode = 42;
+	cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
+
+	err = mmc_wait_for_app_cmd(card->host, card, &cmd, MMC_CMD_RETRIES);
+	if (err)
+		return err;
+
+	return 0;
+}
+#endif
+
 /*
  * UHS-I specific initialization procedure
  */
@@ -685,6 +710,10 @@ static int mmc_sd_init_uhs_card(struct mmc_card *card)
 
 		mmc_set_bus_width(card->host, MMC_BUS_WIDTH_4);
 	}
+
+#ifdef IC_ADD_FUNCTION
+	mmc_app_acmd42(card);
+#endif
 
 	/*
 	 * Select the bus speed mode depending on host
@@ -1022,6 +1051,111 @@ unsigned mmc_sd_get_max_clock(struct mmc_card *card)
 	return max_dtr;
 }
 
+#ifdef IC_ADD_FUNCTION
+static int driver_send_command(struct sdhci_host *host)
+{
+	int ret=0;
+	int err;
+	struct mmc_host *mmc = host->mmc;
+	struct mmc_command cmd = {0};
+
+	BUG_ON(!host);
+
+	cmd.opcode = MMC_SELECT_CARD;
+	cmd.arg = 0;
+	cmd.flags = MMC_RSP_NONE | MMC_CMD_AC;
+	err = mmc_wait_for_cmd(mmc, &cmd, 3);
+	if (err) {
+	    pr_err("---- CMD7 FAILE0 ----\n");
+	} else {
+	    ret=1;
+	}
+	return ret;
+}
+
+static void driver_send_command24(struct sdhci_host *host,u32 * cfg_data,int data_len)
+{
+	struct mmc_host *mmc = host->mmc;
+
+	u8 *data1 = kzalloc(PAGE_SIZE, GFP_KERNEL);
+	struct mmc_request mrq = {0};
+	struct mmc_command cmd = { 0 };
+	struct mmc_data data = { 0 };
+	struct scatterlist sg;
+
+	memcpy(data1, (u8 *)&(cfg_data[0]), data_len);
+	sg_init_one(&sg, data1, 512);
+
+	cmd.opcode = MMC_WRITE_BLOCK;
+	cmd.arg = 0;
+	cmd.flags = MMC_RSP_R1 | MMC_CMD_ADTC;
+	data.blksz = 512;
+	data.blocks = 1;
+	data.flags = MMC_DATA_WRITE;
+	data.timeout_ns = 1000 * 1000 * 1000; /* 1 sec */
+	data.sg = &sg;
+	data.sg_len = 1;
+	mrq.cmd = &cmd;
+	mrq.data = &data;
+	mrq.stop = NULL;
+	mmc_wait_for_req(mmc, &mrq);
+
+	kfree(data1);
+}
+
+void bht_update_cfg(struct mmc_host *mmc_host, struct mmc_card *card,u32 * cfg_data,int data_len)
+{
+	int ret = 0;
+	struct sdhci_host * host = mmc_priv(mmc_host);
+	{
+		mmc_sd_get_csd(mmc_host, card);
+		mmc_set_bus_width(mmc_host, MMC_BUS_WIDTH_4);
+		mmc_sd_get_csd(mmc_host, card);
+		if (host->ops->reset) {
+			host->ops->reset(host, SDHCI_RESET_CMD|SDHCI_RESET_DATA);
+		}
+
+		mmc_sd_get_csd(mmc_host, card);
+		if (1) {
+			ret=driver_send_command(host);// send command7
+			if(!ret)
+				pr_err("--send cmd7   error--\n");
+			driver_send_command24(host,cfg_data,data_len);// send command24
+			ret=driver_send_command(host);//send command7
+			if (!ret) {
+				pr_err("--send cmd7  error--\n");
+			}
+		}
+		mmc_set_bus_width(mmc_host, MMC_BUS_WIDTH_1);
+	}
+}
+
+void bht_load_hw_inject(struct mmc_host *mmc_host, struct mmc_card *card,u32 * cfg_data,int data_len,u32 sel200, u32 sel100)
+{
+	u32 gg_hw_inj[16]= GGC_CFG_DATA;
+
+	gg_hw_inj[1]=0x7364032;
+	gg_hw_inj[11]=0x57336200;
+	gg_hw_inj[12]=0x00725777;
+
+	bht_update_cfg(mmc_host,card,gg_hw_inj,data_len);
+}
+
+void bht_load(struct mmc_host *mmc_host, struct mmc_card *card)
+{
+	struct sdhci_host * host = mmc_priv(mmc_host);
+
+	if ( sdhci_bht_target_host(host))
+	{
+		u32 gg_sw_def[16]=GGC_CFG_DATA;//default use iSD no SSC
+
+		driver_send_command(host);// send command7
+		bht_load_hw_inject(mmc_host,card,gg_sw_def,sizeof(gg_sw_def),0x77f,0x77f);
+		bht_update_cfg(mmc_host,card,gg_sw_def,sizeof(gg_sw_def));
+	}
+}
+#endif
+
 /*
  * Handle the detection and initialisation of a card.
  *
@@ -1084,6 +1218,12 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 		mmc_decode_cid(card);
 	}
 
+#ifdef IC_ADD_FUNCTION
+	{
+		bht_load(host,card);
+	}
+#endif
+
 	/*
 	 * handling only for cards supporting DSR and hosts requesting
 	 * DSR configuration
@@ -1110,6 +1250,21 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 		if (err)
 			goto free_card;
 	} else {
+		#ifdef IC_ADD_FUNCTION
+		/*
+		 * Switch to wider bus (if supported).
+		 */
+		if ((host->caps & MMC_CAP_4_BIT_DATA) &&
+			(card->scr.bus_widths & SD_SCR_BUS_WIDTH_4)) {
+			err = mmc_app_set_bus_width(card, MMC_BUS_WIDTH_4);
+			if (err)
+				goto free_card;
+
+			mmc_set_bus_width(host, MMC_BUS_WIDTH_4);
+		}
+
+		mmc_app_acmd42(card);
+		#endif
 		/*
 		 * Attempt to change to high-speed (if supported)
 		 */
@@ -1123,7 +1278,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 		 * Set bus speed.
 		 */
 		mmc_set_clock(host, mmc_sd_get_max_clock(card));
-
+#ifndef IC_ADD_FUNCTION
 		/*
 		 * Switch to wider bus (if supported).
 		 */
@@ -1135,6 +1290,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 
 			mmc_set_bus_width(host, MMC_BUS_WIDTH_4);
 		}
+#endif
 	}
 
 	card->clk_scaling_highest = mmc_sd_get_max_clock(card);
@@ -1508,9 +1664,37 @@ int mmc_attach_sd(struct mmc_host *host)
 		goto err;
 	}
 #else
+#ifdef IC_ADD_FUNCTION
+	if (sdhci_bht_target_host(host)) {
+		int retries = 2;
+		while (retries) {
+			err = mmc_sd_init_card(host, rocr, NULL);
+			if (err) {
+				retries--;
+				mmc_power_off(host);
+				usleep_range(5000, 5500);
+				mmc_power_up(host, rocr);
+				mmc_select_voltage(host, rocr);
+				continue;
+			}
+			break;
+		}
+
+		if (!retries) {
+			printk(KERN_ERR "%s: mmc_sd_init_card() failure (err = %d)\n",
+			       mmc_hostname(host), err);
+			goto err;
+		}
+	 } else {
+		err = mmc_sd_init_card(host, rocr, NULL);
+		if (err)
+			goto err;
+	 }
+#else
 	err = mmc_sd_init_card(host, rocr, NULL);
 	if (err)
 		goto err;
+#endif
 #endif
 
 	mmc_release_host(host);
