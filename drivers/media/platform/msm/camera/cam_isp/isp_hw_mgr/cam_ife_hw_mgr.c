@@ -2591,9 +2591,15 @@ static int cam_ife_mgr_config_hw(void *hw_mgr_priv,
 				&ctx->config_done_complete,
 				msecs_to_jiffies(30));
 			if (rc <= 0) {
+#ifdef CONFIG_PRODUCT_HEART
+				CAM_ERR_RATE_LIMIT_BY_USER(CAM_ISP,
+					"config done completion timeout for req_id=%llu rc=%d ctx_index %d",
+					cfg->request_id, rc, ctx->ctx_index);
+#else
 				CAM_ERR(CAM_ISP,
 					"config done completion timeout for req_id=%llu rc=%d ctx_index %d",
 					cfg->request_id, rc, ctx->ctx_index);
+#endif
 				if (rc == 0)
 					rc = -ETIMEDOUT;
 			} else {
