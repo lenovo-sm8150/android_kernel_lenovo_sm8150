@@ -1,0 +1,14 @@
+menuconfig INPUT_FINGERPRINT
+	bool "Fingerprint"
+	help
+	  Say Y here, and a list of supported fingerprint will be displayed.
+	  This option doesn't affect the kernel.
+
+	  If unsure, say Y.
+
+#source "goodixfp/Kconfig"
+config FINGERPRINT_GOODIX
+	tristate "generic goodix fingerprint driver"
+	help
+	add support for goodix fingerprint driver.
+
