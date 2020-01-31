@@ -114,4 +114,5 @@ obj-$(CONFIG_TOUCHSCREEN_IQS5XX)	+= iqs5xx.o
 obj-$(CONFIG_TOUCHSCREEN_ST)	+= st/
 obj-$(CONFIG_TOUCHSCREEN_FTS)	+= focaltech_touch/
 
+obj-$(CONFIG_TOUCHSCREEN_FTS)           += focaltech_touch/
 obj-y          += touch_gesture_inf.o
