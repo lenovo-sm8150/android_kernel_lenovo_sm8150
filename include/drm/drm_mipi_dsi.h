@@ -284,9 +284,16 @@ int mipi_dsi_dcs_set_pixel_format(struct mipi_dsi_device *dsi, u8 format);
 int mipi_dsi_dcs_set_tear_scanline(struct mipi_dsi_device *dsi, u16 scanline);
 int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
 					u16 brightness);
+int mipi_dsi_dcs_set_display_brightness_hbm(struct mipi_dsi_device *dsi,
+					u16 brightness);
 int mipi_dsi_dcs_get_display_brightness(struct mipi_dsi_device *dsi,
 					u16 *brightness);
-
+int mipi_dsi_dcs_get_elvss_data(struct mipi_dsi_device *dsi,
+					u8 *val);
+int mipi_dsi_dcs_get_elvss_data_1(struct mipi_dsi_device *dsi,
+					u8 *val);
+int mipi_dsi_dcs_set_elvss_dim_off(struct mipi_dsi_device *dsi,
+					u8 val);
 /**
  * struct mipi_dsi_driver - DSI driver
  * @driver: device driver model driver
