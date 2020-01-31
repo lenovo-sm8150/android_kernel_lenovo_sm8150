@@ -53,6 +53,7 @@ static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
 	{.boot_param = dsi_display_primary},
 	{.boot_param = dsi_display_secondary},
 };
+int dsi_display_id=0;
 
 static const struct of_device_id dsi_display_dt_match[] = {
 	{.compatible = "qcom,dsi-display"},
@@ -225,6 +226,53 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	}
 
 	rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
+	if (rc)
+		pr_err("unable to set backlight\n");
+
+	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
+			DSI_CORE_CLK, DSI_CLK_OFF);
+	if (rc) {
+		pr_err("[%s] failed to disable DSI core clocks, rc=%d\n",
+		       dsi_display->name, rc);
+		goto error;
+	}
+
+error:
+	mutex_unlock(&panel->panel_lock);
+	return rc;
+}
+
+int dsi_display_set_backlight_hbm(struct drm_connector *connector,
+	void *display, u32 bl_lvl)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_panel *panel;
+	u64 bl_temp;
+	int rc = 0;
+
+	if (dsi_display == NULL || dsi_display->panel == NULL)
+		return -EINVAL;
+
+	panel = dsi_display->panel;
+
+	mutex_lock(&panel->panel_lock);
+	if (!dsi_panel_initialized(panel)) {
+		rc = -EINVAL;
+		goto error;
+	}
+
+	bl_temp = bl_lvl;
+	pr_debug(" bl_lvl = %u\n", (u32)bl_temp);
+
+	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
+			DSI_CORE_CLK, DSI_CLK_ON);
+	if (rc) {
+		pr_err("[%s] failed to enable DSI core clocks, rc=%d\n",
+		       dsi_display->name, rc);
+		goto error;
+	}
+
+	rc = dsi_panel_set_backlight_hbm(panel, (u32)bl_temp);
 	if (rc)
 		pr_err("unable to set backlight\n");
 
@@ -667,6 +715,67 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 
 	return rc;
 }
+int dsi_display_read_elvss_status(struct dsi_display_ctrl *ctrl,
+		struct dsi_panel *panel)
+{
+	int rc = 0;
+	struct dsi_cmd_desc cmds;
+	u8 data[] = {06, 01, 00, 01, 00, 00, 01, 0xB7};
+	u32 flags = 0;
+	u8 *payload;
+	int size, j;
+	u8 elvss_val;
+	pr_info(" ++\n");
+
+	if (!panel || !ctrl || !ctrl->ctrl)
+		return -EINVAL;
+
+	cmds.msg.type = data[0];
+	cmds.last_command = (data[1] == 1 ? true : false);
+	cmds.msg.channel = data[2];
+	cmds.msg.flags |= (data[3] == 1 ? MIPI_DSI_MSG_REQ_ACK : 0);
+	cmds.msg.ctrl = 0;
+	cmds.post_wait_ms = cmds.msg.wait_ms = data[4];
+	cmds.msg.tx_len = ((data[5] << 8) | (data[6]));
+
+	size = cmds.msg.tx_len * sizeof(u8);
+	payload = kzalloc(size, GFP_KERNEL);
+	if (!payload) {
+		rc = -ENOMEM;
+	}
+
+	for (j = 0; j < cmds.msg.tx_len; j++)
+		payload[j] = data[7 + j];
+
+	cmds.msg.tx_buf = payload;
+	/*
+	 * When DSI controller is not in initialized state, we do not want to
+	 * report a false ESD failure and hence we defer until next read
+	 * happen.
+	 */
+	if (!dsi_ctrl_validate_host_state(ctrl->ctrl))
+		return 0;
+
+	flags |= (DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ |
+		  DSI_CTRL_CMD_CUSTOM_DMA_SCHED);
+
+	if (cmds.last_command) {
+		cmds.msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+		flags |= DSI_CTRL_CMD_LAST_COMMAND;
+	}
+	cmds.msg.rx_buf = &elvss_val;
+	cmds.msg.rx_len = 1;
+	rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds.msg, flags);
+	if (rc <= 0) {
+		pr_err("rx cmd transfer failed rc=%d\n", rc);
+		goto error;
+	}
+	pr_info("elvss val = 0x%x\n", elvss_val);
+	if (elvss_val != 0)
+		return elvss_val;
+error:
+	return 0;
+}
 
 static int dsi_display_validate_status(struct dsi_display_ctrl *ctrl,
 		struct dsi_panel *panel)
@@ -850,6 +959,79 @@ exit:
 release_panel_lock:
 	dsi_panel_release_panel_lock(panel);
 	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
+
+	return rc;
+}
+
+static int dsi_display_elvss_read(struct dsi_display *display)
+{
+	struct dsi_display_ctrl *m_ctrl;
+	int rc;
+	pr_info(" ++\n");
+
+	m_ctrl = &display->ctrl[display->cmd_master_idx];
+
+	rc = dsi_display_cmd_engine_enable(display);
+	if (rc) {
+		pr_err("cmd engine enable failed\n");
+		return 0;
+	}
+
+	rc = dsi_display_read_elvss_status(m_ctrl, display->panel);
+	if (rc <= 0) {
+		pr_err("[%s] read elvss failed on master,rc=%d\n",
+		       display->name, rc);
+		goto exit;
+	}
+
+exit:
+	dsi_display_cmd_engine_disable(display);
+	return rc;
+}
+
+int dsi_display_read_elvss_volt(struct drm_connector *connector, void *display,
+					bool te_check_override)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_panel *panel;
+	int rc = 0x1;
+	int elvss_vl = 0;
+
+	if (!dsi_display || !dsi_display->panel)
+		return -EINVAL;
+
+	panel = dsi_display->panel;
+
+	dsi_panel_acquire_panel_lock(panel);
+
+	if (!panel->panel_initialized) {
+		pr_debug("Panel not initialized\n");
+		goto release_panel_lock;
+	}
+
+	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_ON);
+
+	/* samsung panel need close evlss dim */
+	if (dsi_display_id == 0) {
+		dsi_panel_get_elvss_data(panel);
+		elvss_vl = dsi_display_elvss_read(dsi_display);
+		dsi_panel_get_elvss_data_1(panel);
+		if ( elvss_vl > 0) {
+			dsi_panel_set_elvss_dim_off(panel, elvss_vl);
+			dsi_panel_parse_elvss_config(panel, elvss_vl);
+		} else {
+			elvss_vl = 0x92; //
+			dsi_panel_set_elvss_dim_off(panel, elvss_vl);
+			pr_info("read elvss volt failed\n");
+		}
+	}
+
+	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_OFF);
+
+release_panel_lock:
+	dsi_panel_release_panel_lock(panel);
 
 	return rc;
 }
@@ -2237,10 +2419,27 @@ static int dsi_display_parse_boot_display_selection(void)
 		boot_displays[i].name[j] = '\0';
 
 		boot_displays[i].boot_disp_en = true;
+#ifdef CONFIG_PRODUCT_ZIPPO
+		if (i == 0) {
+			if (strstr(boot_displays[0].name, "tianma"))
+				dsi_display_id = 1;
+			pr_info("display name[%s], id= %d\n", boot_displays[0].name, dsi_display_id);
+		}
+#endif
 	}
 
 	return 0;
 }
+
+#ifdef CONFIG_PRODUCT_ZIPPO
+int dsi_display_parse_panel(void)
+{
+	if (strstr(dsi_display_primary, "tianma"))
+		return 1;
+	else
+		return 0;
+}
+#endif
 
 static int dsi_display_phy_power_on(struct dsi_display *display)
 {

@@ -4096,7 +4096,7 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 			sde_dbg_base.dsi_dbg_bus = true;
 
 		if (!strcmp(blk_name, "panic"))
-			do_panic = true;
+			do_panic = false;
 
 		if (!strcmp(blk_name, "secure"))
 			dump_secure = true;
@@ -4159,7 +4159,7 @@ void sde_dbg_ctrl(const char *name, ...)
 				sde_dbg_base.debugfs_ctrl &
 				DBG_CTRL_RESET_HW_PANIC) {
 			pr_debug("reset hw panic\n");
-			panic("reset_hw");
+			//panic("reset_hw");
 		}
 	}
 

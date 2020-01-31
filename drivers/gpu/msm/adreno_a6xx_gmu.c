@@ -295,6 +295,15 @@ static void a6xx_gmu_power_config(struct kgsl_device *device)
 {
 	struct adreno_device *adreno_dev = ADRENO_DEVICE(device);
 	struct gmu_device *gmu = KGSL_GMU_DEVICE(device);
+	static unsigned int idle_level, skip_first;
+
+	if (skip_first == 0) {
+		idle_level = gmu->idle_level;
+		gmu->idle_level = GPU_HW_ACTIVE;
+		skip_first = 1;
+	} else {
+		gmu->idle_level = idle_level;
+	}
 
 	/* Configure registers for idle setting. The setting is cumulative */
 
