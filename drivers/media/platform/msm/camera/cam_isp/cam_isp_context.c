@@ -3938,7 +3938,11 @@ static int __cam_isp_ctx_start_dev_in_ready(struct cam_context *ctx,
 		&start_isp);
 	if (rc) {
 		/* HW failure. user need to clean up the resource */
+#ifdef CONFIG_PRODUCT_HEART
+		CAM_ERR_RATE_LIMIT_BY_USER(CAM_ISP, "Start HW failed");
+#else
 		CAM_ERR(CAM_ISP, "Start HW failed");
+#endif
 		ctx->state = CAM_CTX_READY;
 		trace_cam_context_state("ISP", ctx);
 		goto end;

@@ -213,7 +213,11 @@ int32_t cam_cci_i2c_poll(struct cam_sensor_cci_client *client,
 
 	/* If rc is 1 then read is successful but poll is failure */
 	if (rc == 1)
+#ifdef CONFIG_PRODUCT_HEART
+		CAM_ERR_RATE_LIMIT_BY_USER(CAM_SENSOR, "poll failed rc=%d(non-fatal)",	rc);
+#else
 		CAM_ERR(CAM_SENSOR, "poll failed rc=%d(non-fatal)",	rc);
+#endif
 
 	if (rc < 0)
 		CAM_ERR(CAM_SENSOR, "poll failed rc=%d", rc);

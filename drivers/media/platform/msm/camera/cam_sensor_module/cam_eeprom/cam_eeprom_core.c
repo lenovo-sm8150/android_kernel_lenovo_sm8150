@@ -20,6 +20,12 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 
+#ifdef __EEPROM_RW_IF__
+#include "cam_eeprom_rw_if.h"
+#if __EEPROM_RW_POWER_BY_KERNEL__
+static bool eflag = false;
+#endif
+#endif
 /**
  * cam_eeprom_read_memory() - read map data into buffer
  * @e_ctrl:     eeprom control struct
@@ -64,6 +70,7 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 			i2c_reg_settings.addr_type = emap[j].page.addr_type;
 			i2c_reg_settings.data_type = emap[j].page.data_type;
 			i2c_reg_settings.size = 1;
+			i2c_reg_settings.delay = 0;
 			i2c_reg_array.reg_addr = emap[j].page.addr;
 			i2c_reg_array.reg_data = emap[j].page.data;
 			i2c_reg_array.delay = emap[j].page.delay;
@@ -81,6 +88,7 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 			i2c_reg_settings.addr_type = emap[j].pageen.addr_type;
 			i2c_reg_settings.data_type = emap[j].pageen.data_type;
 			i2c_reg_settings.size = 1;
+			i2c_reg_settings.delay = 0;
 			i2c_reg_array.reg_addr = emap[j].pageen.addr;
 			i2c_reg_array.reg_data = emap[j].pageen.data;
 			i2c_reg_array.delay = emap[j].pageen.delay;
@@ -125,6 +133,7 @@ static int cam_eeprom_read_memory(struct cam_eeprom_ctrl_t *e_ctrl,
 			i2c_reg_settings.addr_type = emap[j].pageen.addr_type;
 			i2c_reg_settings.data_type = emap[j].pageen.data_type;
 			i2c_reg_settings.size = 1;
+			i2c_reg_settings.delay = 0;
 			i2c_reg_array.reg_addr = emap[j].pageen.addr;
 			i2c_reg_array.reg_data = 0;
 			i2c_reg_array.delay = emap[j].pageen.delay;
@@ -898,6 +907,17 @@ static int32_t cam_eeprom_pkt_parse(struct cam_eeprom_ctrl_t *e_ctrl, void *arg)
 
 		rc = cam_eeprom_get_cal_data(e_ctrl, csl_packet);
 		rc = cam_eeprom_power_down(e_ctrl);
+#ifdef __EEPROM_RW_IF__
+#if __EEPROM_RW_POWER_BY_KERNEL__
+		CAM_DBG(CAM_EEPROM, "soc_info->index: %p %d",
+			e_ctrl, (e_ctrl != NULL) ? e_ctrl->soc_info.index : 0xFF);
+		if (!eflag && (e_ctrl->soc_info.index == CAM_ID_0 ||
+			e_ctrl->soc_info.index == CAM_ID_1)) {
+			set_eeprom_handle(e_ctrl);
+			eflag = true;
+		}
+#endif
+#endif
 		e_ctrl->cam_eeprom_state = CAM_EEPROM_ACQUIRE;
 		vfree(e_ctrl->cal_data.mapdata);
 		vfree(e_ctrl->cal_data.map);
@@ -1071,4 +1091,104 @@ release_mutex:
 
 	return rc;
 }
+
+#ifdef __EEPROM_RW_IF__
+#if __EEPROM_RW_POWER_BY_KERNEL__
+int eeprom_rw_if_power_up(int cam_id)
+{
+	struct cam_hw_soc_info *soc_info;
+	struct cam_sensor_power_ctrl_t *power_info;
+	cam_eeprom_rw_t *rw_ctrl;
+	int rc = 0;
+
+	if (cam_id >= MAX_CAM_ID)
+		return -EINVAL;
+
+	rw_ctrl = get_eeprom_handle(cam_id);
+	if (!rw_ctrl) {
+		CAM_ERR(CAM_EEPROM, "failed: rw_ctrl is NULL");
+		return -EINVAL;
+	}
+
+	soc_info = &(rw_ctrl->soc_info);
+	if (!soc_info) {
+		CAM_ERR(CAM_EEPROM, "failed: soc_info is NULL");
+		return -EINVAL;
+	}
+
+	power_info = &(rw_ctrl->power_info);
+	if (!power_info) {
+		CAM_ERR(CAM_EEPROM, "failed: power_info is NULL");
+		return -EINVAL;
+	}
+
+	/* Parse and fill vreg params for power up settings */
+	rc = msm_camera_fill_vreg_params(
+		&(rw_ctrl->soc_info),
+		power_info->power_setting,
+		power_info->power_setting_size);
+	if (rc) {
+		CAM_ERR(CAM_EEPROM,
+			"failed to fill power up vreg params rc:%d", rc);
+		return rc;
+	}
+
+	/* Parse and fill vreg params for power down settings*/
+	rc = msm_camera_fill_vreg_params(
+		&(rw_ctrl->soc_info),
+		power_info->power_down_setting,
+		power_info->power_down_setting_size);
+	if (rc) {
+		CAM_ERR(CAM_EEPROM,
+			"failed to fill power down vreg params	rc:%d", rc);
+		return rc;
+	}
+
+	power_info->dev = soc_info->dev;
+
+	rc = cam_sensor_core_power_up(power_info, soc_info);
+	if (rc) {
+		CAM_ERR(CAM_EEPROM, "failed in eeprom power up rc %d", rc);
+		return rc;
+	}
+	return rc;
+}
+
+int eeprom_rw_if_power_down(int cam_id)
+{
+	struct cam_sensor_power_ctrl_t *power_info;
+	struct cam_hw_soc_info         *soc_info;
+	cam_eeprom_rw_t *sw_ctrl;
+	int rc = 0;
+
+	if (cam_id >= MAX_CAM_ID)
+		return -EINVAL;
+
+	sw_ctrl = get_eeprom_handle(cam_id);
+	if (!sw_ctrl) {
+		CAM_ERR(CAM_EEPROM, "failed: sw_ctrl %pK", sw_ctrl);
+		return -EINVAL;
+	}
+
+	power_info = &(sw_ctrl->power_info);
+	if (!power_info) {
+		CAM_ERR(CAM_EEPROM, "failed: power_info %pK", power_info);
+		return -EINVAL;
+	}
+
+	soc_info = &(sw_ctrl->soc_info);
+	if (!soc_info) {
+		CAM_ERR(CAM_EEPROM, "failed: soc_info %pK", soc_info);
+		return -EINVAL;
+	}
+
+	rc = cam_sensor_util_power_down(power_info, soc_info);
+	if (rc) {
+		CAM_ERR(CAM_EEPROM, "power down the core is failed:%d", rc);
+		return rc;
+	}
+	return rc;
+}
+#endif
+#endif
 

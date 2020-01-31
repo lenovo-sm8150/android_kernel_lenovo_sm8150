@@ -19,6 +19,7 @@
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
 
+#include "cam_power_dev.h"
 
 static void cam_sensor_update_req_mgr(
 	struct cam_sensor_ctrl_t *s_ctrl,
@@ -560,6 +561,8 @@ void cam_sensor_query_cap(struct cam_sensor_ctrl_t *s_ctrl,
 		s_ctrl->sensordata->subdev_id[SUB_MODULE_IR_LED];
 	query_cap->slot_info =
 		s_ctrl->soc_info.index;
+	query_cap->hcg_ratio = s_ctrl->hcg_ratio;//LENOVO_CUSTOM
+
 }
 
 static uint16_t cam_sensor_id_by_mask(struct cam_sensor_ctrl_t *s_ctrl,
@@ -620,6 +623,9 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int rc = 0;
 	uint32_t chipid = 0;
+#ifdef CONFIG_PRODUCT_HEART
+	uint32_t chiprevison = 0;
+#endif
 	struct cam_camera_slave_info *slave_info;
 
 	slave_info = &(s_ctrl->sensordata->slave_info);
@@ -636,13 +642,150 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 		&chipid, CAMERA_SENSOR_I2C_TYPE_WORD,
 		CAMERA_SENSOR_I2C_TYPE_WORD);
 
-	CAM_DBG(CAM_SENSOR, "read id: 0x%x expected id 0x%x:",
-			 chipid, slave_info->sensor_id);
+	CAM_INFO(CAM_SENSOR, "###CAM reg=0x%x,read id: 0x%x expected id 0x%x:",
+			slave_info->sensor_id_reg_addr,chipid, slave_info->sensor_id);
+#ifdef CONFIG_PRODUCT_HEART
+	if (slave_info->sensor_id == 0x0576) {
+		rc = camera_io_dev_read(
+			&(s_ctrl->io_master_info),
+			0x0018,
+			&chiprevison, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_WORD);
+
+		CAM_ERR(CAM_SENSOR, "###CAM <imx576> read chip revision: 0x%x ",
+				 chiprevison);
+	} else if(slave_info->sensor_id == 0x885a) {
+		rc = camera_io_dev_read(
+			&(s_ctrl->io_master_info),
+			0x700f,
+			&chiprevison, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_WORD);
+
+		CAM_ERR(CAM_SENSOR, "###CAM <ov8356> read chip revision: 0x%x ",
+				 chiprevison);
+	}else if (slave_info->sensor_id == 0x0519) {
+		rc = camera_io_dev_read(
+			&(s_ctrl->io_master_info),
+			0x0018,
+			&chiprevison, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_WORD);
+
+		CAM_ERR(CAM_SENSOR, "###CAM <imx519> read chip revision: 0x%x ",
+				 chiprevison);
+	} else if (slave_info->sensor_id == 0x3109) {
+		rc = camera_io_dev_read(
+			&(s_ctrl->io_master_info),
+			0x0002,
+			&chiprevison, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_BYTE);
+
+		CAM_ERR(CAM_SENSOR, "###CAM <s5k3p9sx> read chip revision: 0x%x ",
+				 chiprevison);
+	}
+#endif
 	if (cam_sensor_id_by_mask(s_ctrl, chipid) != slave_info->sensor_id) {
 		CAM_ERR(CAM_SENSOR, "chip id %x does not match %x",
 				chipid, slave_info->sensor_id);
 		return -ENODEV;
 	}
+#ifdef CONFIG_PRODUCT_ZIPPO
+    // READ OV02K20 HCG_LCG_RATIO
+	 if (chipid == 0x243) {
+		uint32_t hcg_ratio = 0;
+		struct cam_sensor_i2c_reg_setting  i2c_reg_settings = {0};
+		struct cam_sensor_i2c_reg_array    i2c_reg_array = {0};
+		i2c_reg_settings.size = 1;
+		i2c_reg_settings.delay = 0;
+		i2c_reg_array.delay = 0;
+		i2c_reg_settings.reg_setting = &i2c_reg_array;
+
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_BYTE;
+		i2c_reg_array.reg_addr = 0x0100;
+		i2c_reg_array.reg_data = 0x1;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_SENSOR, "stream on failed rc %d",
+				rc);
+			return rc;
+		}
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_BYTE;
+		i2c_reg_array.reg_addr = 0x3d84;
+		i2c_reg_array.reg_data = 0x40;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_SENSOR, "otp mode failed rc %d",
+				rc);
+			return rc;
+		}
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_array.reg_addr = 0x3d88;
+		i2c_reg_array.reg_data = 0x73fe;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_EEPROM, "start addr failed rc %d",
+				rc);
+			return rc;
+		}
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_array.reg_addr = 0x3d8a;
+		i2c_reg_array.reg_data = 0x73ff;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_EEPROM, "end addr failed rc %d",
+				rc);
+			return rc;
+		}
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_BYTE;
+		i2c_reg_array.reg_addr = 0x3d81;
+		i2c_reg_array.reg_data = 0x1;
+		i2c_reg_settings.delay = 15;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_EEPROM, "load otp failed rc %d",
+				rc);
+			return rc;
+		}
+
+		rc = camera_io_dev_read(
+			&(s_ctrl->io_master_info),
+			0x73fe,
+			&hcg_ratio, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_WORD);
+		s_ctrl->hcg_ratio = hcg_ratio;
+		CAM_INFO(CAM_SENSOR, "hcg_ratio: 0x%x ",
+				 hcg_ratio);
+
+		i2c_reg_settings.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+		i2c_reg_settings.data_type = CAMERA_SENSOR_I2C_TYPE_BYTE;
+		i2c_reg_array.reg_addr = 0x0100;
+		i2c_reg_array.reg_data = 0x0;
+		rc = camera_io_dev_write(&(s_ctrl->io_master_info),
+			&i2c_reg_settings);
+		if (rc) {
+			CAM_ERR(CAM_SENSOR, "stream off failed rc %d",
+				rc);
+			return rc;
+		}
+	}
+
+#endif
+
+
 	return rc;
 }
 
@@ -712,6 +855,12 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 				 rc);
 			goto free_power_settings;
 		}
+
+		CAM_DBG(CAM_SENSOR,
+			"Probe process,slot:%d,slave_addr:0x%x,sensor_id:0x%x",
+			s_ctrl->soc_info.index,
+			s_ctrl->sensordata->slave_info.sensor_slave_addr,
+			s_ctrl->sensordata->slave_info.sensor_id);
 
 		/* Power up and probe sensor */
 		rc = cam_sensor_power_up(s_ctrl);
@@ -1141,6 +1290,7 @@ int cam_sensor_power_down(struct cam_sensor_ctrl_t *s_ctrl)
 		CAM_ERR(CAM_SENSOR, "failed: power_info %pK", power_info);
 		return -EINVAL;
 	}
+
 	rc = cam_sensor_util_power_down(power_info, soc_info);
 	if (rc < 0) {
 		CAM_ERR(CAM_SENSOR, "power down the core is failed:%d", rc);
