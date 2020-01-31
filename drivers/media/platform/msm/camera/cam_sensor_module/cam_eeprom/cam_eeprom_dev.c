@@ -15,6 +15,9 @@
 #include "cam_eeprom_soc.h"
 #include "cam_eeprom_core.h"
 #include "cam_debug_util.h"
+#ifdef __EEPROM_RW_IF__
+#include "cam_eeprom_rw_if.h"
+#endif
 
 static long cam_eeprom_subdev_ioctl(struct v4l2_subdev *sd,
 	unsigned int cmd, void *arg)
@@ -472,6 +475,23 @@ static int32_t cam_eeprom_platform_driver_probe(
 	platform_set_drvdata(pdev, e_ctrl);
 	e_ctrl->cam_eeprom_state = CAM_EEPROM_INIT;
 
+#ifdef __EEPROM_RW_IF__
+#if __EEPROM_RW_POWER_BY_KERNEL__
+	rc = eeprom_rw_if_init(e_ctrl);
+	if (rc) {
+		CAM_ERR(CAM_EEPROM,
+			"failed: to init eeprom rw sysfs interface rc %d", rc);
+	} else {
+#endif
+		rc = eeprom_rw_if_sysfs_create(&pdev->dev.kobj);
+	    if (rc)
+			CAM_ERR(CAM_EEPROM,
+				"failed: to create eeprom rw sysfs interface rc %d", rc);
+#if __EEPROM_RW_POWER_BY_KERNEL__
+	}
+#endif
+#endif
+
 	return rc;
 free_soc:
 	kfree(soc_private);
@@ -511,7 +531,11 @@ static int cam_eeprom_platform_driver_remove(struct platform_device *pdev)
 	platform_set_drvdata(pdev, NULL);
 	v4l2_set_subdevdata(&e_ctrl->v4l2_dev_str.sd, NULL);
 	kfree(e_ctrl);
-
+#ifdef __EEPROM_RW_IF__
+#if __EEPROM_RW_POWER_BY_KERNEL__
+	eeprom_rw_if_release(soc_info->index);
+#endif
+#endif
 	return 0;
 }
 
