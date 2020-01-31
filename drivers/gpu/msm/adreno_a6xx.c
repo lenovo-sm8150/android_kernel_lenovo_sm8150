@@ -1131,6 +1131,7 @@ static int a6xx_send_cp_init(struct adreno_device *adreno_dev,
 	struct kgsl_device *device = KGSL_DEVICE(adreno_dev);
 	unsigned int *cmds;
 	int ret;
+	static int skip_first;
 
 	cmds = adreno_ringbuffer_allocspace(rb, 12);
 	if (IS_ERR(cmds))
@@ -1139,6 +1140,11 @@ static int a6xx_send_cp_init(struct adreno_device *adreno_dev,
 	*cmds++ = cp_type7_packet(CP_ME_INIT, 11);
 
 	_set_ordinals(adreno_dev, cmds, 11);
+
+	if (skip_first == 0) {
+		skip_first = 1;
+		return -ETIMEDOUT;
+	}
 
 	ret = adreno_ringbuffer_submit_spin(rb, NULL, 2000);
 	if (ret) {
