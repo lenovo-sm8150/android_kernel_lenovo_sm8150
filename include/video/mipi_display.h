@@ -139,4 +139,8 @@ enum {
 #define MIPI_DCS_PIXEL_FMT_8BIT		2
 #define MIPI_DCS_PIXEL_FMT_3BIT		1
 
+extern int dsi_display_id;
+#ifdef CONFIG_PRODUCT_ZIPPO
+extern int dsi_display_parse_panel(void);
+#endif
 #endif
