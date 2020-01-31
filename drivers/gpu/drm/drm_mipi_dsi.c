@@ -32,6 +32,7 @@
 #include <linux/of_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/slab.h>
+#include <linux/delay.h>
 
 #include <video/mipi_display.h>
 
@@ -1052,12 +1053,23 @@ EXPORT_SYMBOL(mipi_dsi_dcs_set_tear_scanline);
  *
  * Return: 0 on success or a negative error code on failure.
  */
+static u16 curr_bl = 0xff;
+#ifdef CONFIG_PRODUCT_ZIPPO
+extern int dsi_panel_on_hbm;
+#endif
 int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
 					u16 brightness)
 {
-	u8 payload[2] = { brightness & 0xff, brightness >> 8 };
+	u8 payload[2] = { brightness >> 8, brightness & 0xff };
 	ssize_t err;
 
+#ifdef CONFIG_PRODUCT_ZIPPO
+	curr_bl = brightness;
+	if ((dsi_display_id == 1) && (dsi_panel_on_hbm == 1)) {
+		pr_err("hbm enabled, unable to set backlight\n");
+		return 0;
+	}
+#endif
 	err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
 				 payload, sizeof(payload));
 	if (err < 0)
@@ -1066,6 +1078,110 @@ int mipi_dsi_dcs_set_display_brightness(struct mipi_dsi_device *dsi,
 	return 0;
 }
 EXPORT_SYMBOL(mipi_dsi_dcs_set_display_brightness);
+
+int mipi_dsi_dcs_set_display_brightness_hbm(struct mipi_dsi_device *dsi,
+					u16 brightness)
+{
+	u8 hbm_en = 0xE0;
+	u8 hbm_dis = 0x20;
+	u8 hbm_on[2] = { 0xf, 0xff };
+	u8 hbm_off[2] = { curr_bl >> 8, curr_bl & 0xff };
+	u8 payload_F0_B[5] = { 0x55, 0xAA, 0x52, 0x08, 0x00 };
+	u8 payload_B4[30] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47,
+		0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47, 0x47};
+	u8 payload_B4_1[30] = { 0x98, 0x77, 0x55, 0x44, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
+		0x30, 0x52, 0x35, 0x03, 0xe6, 0xe6, 0xc9, 0xc9, 0xac, 0xac,
+		0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0x84};
+	u8 dim_dis = 0x20;
+	u8 dim_en = 0x28;
+	ssize_t err;
+
+	if (dsi_display_id ==0) { /* samsung panel */
+		if (brightness == 1)
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+						 &hbm_en, sizeof(hbm_en));
+		else
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+						 &hbm_dis, sizeof(hbm_dis));
+	} else if (dsi_display_id ==1) { /* tianma panel */
+		if (brightness == 1) {
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+				&dim_dis, sizeof(dim_dis));
+			err = mipi_dsi_dcs_write(dsi, 0xF0, payload_F0_B, sizeof(payload_F0_B));
+			err = mipi_dsi_dcs_write(dsi, 0xB4, payload_B4, sizeof(payload_B4));
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+						hbm_on, sizeof(hbm_on));
+		} else {
+			err = mipi_dsi_dcs_write(dsi, 0xF0, payload_F0_B, sizeof(payload_F0_B));
+			err = mipi_dsi_dcs_write(dsi, 0xB4, payload_B4_1, sizeof(payload_B4_1));
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+						hbm_off, sizeof(hbm_off));
+			msleep(25);
+			err = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+				&dim_en, sizeof(dim_en));
+		}
+	}
+
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+EXPORT_SYMBOL(mipi_dsi_dcs_set_display_brightness_hbm);
+
+int mipi_dsi_dcs_get_elvss_data(struct mipi_dsi_device *dsi,
+					u8 *val)
+{
+	u8 payload_f0[2] = { 0x5A, 0x5A };
+	u8 payload_b0 = 0x07;
+	ssize_t err;
+
+	err = mipi_dsi_dcs_write(dsi, 0xF0, payload_f0, sizeof(payload_f0));
+	err = mipi_dsi_dcs_write(dsi, 0xB0, &payload_b0, sizeof(payload_b0));
+
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+EXPORT_SYMBOL(mipi_dsi_dcs_get_elvss_data);
+int mipi_dsi_dcs_get_elvss_data_1(struct mipi_dsi_device *dsi,
+					u8 *val)
+{
+	u8 payload_f0_1[2] = { 0xA5, 0xA5 };
+	ssize_t err;
+	err = mipi_dsi_dcs_write(dsi, 0xF0, payload_f0_1, sizeof(payload_f0_1));
+
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+
+int mipi_dsi_dcs_set_elvss_dim_off(struct mipi_dsi_device *dsi,
+					u8 val)
+{
+	u8 payload_f0[2] = { 0x5A, 0x5A };
+	u8 payload_f0_1[2] = { 0xA5, 0xA5 };
+	u8 payload_b7[2] = { 0x01, 0x5B };
+	u8 payload_b0 = 0x07;
+	ssize_t err;
+
+	pr_info("set elvss data:%d\n", val);
+
+	err = mipi_dsi_dcs_write(dsi, 0xF0, payload_f0, sizeof(payload_f0));
+	err = mipi_dsi_dcs_write(dsi, 0xB7, payload_b7, sizeof(payload_b7));
+	err = mipi_dsi_dcs_write(dsi, 0xB0, &payload_b0, sizeof(payload_b0));
+	err = mipi_dsi_dcs_write(dsi, 0xB7, &val, sizeof(val));
+	err = mipi_dsi_dcs_write(dsi, 0xF0, payload_f0_1, sizeof(payload_f0_1));
+
+	if (err < 0)
+		return err;
+
+	return 0;
+}
+EXPORT_SYMBOL(mipi_dsi_dcs_set_elvss_dim_off);
 
 /**
  * mipi_dsi_dcs_get_display_brightness() - gets the current brightness value
