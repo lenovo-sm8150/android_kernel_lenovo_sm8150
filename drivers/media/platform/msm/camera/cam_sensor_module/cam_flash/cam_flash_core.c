@@ -210,6 +210,20 @@ int cam_flash_pmic_power_ops(struct cam_flash_ctrl *fctrl,
 	}
 
 	if (!regulator_enable) {
+#ifdef CONFIG_PRODUCT_HEART
+		//LENOVO_CUSTOM start
+		if ((fctrl->is_regulator_enabled == true) &&
+			((fctrl->flash_state == CAM_FLASH_STATE_ACQUIRE) ||
+			(fctrl->flash_state == CAM_FLASH_STATE_CONFIG))) {
+			rc = cam_flash_off(fctrl);
+				if (rc) {
+					CAM_ERR(CAM_FLASH,
+					"LED OFF FAILED: %d",
+					rc);
+			}
+		}
+		//LENOVO_CUSTOM end
+#endif
 		if ((fctrl->flash_state == CAM_FLASH_STATE_START) &&
 			(fctrl->is_regulator_enabled == true)) {
 			rc = cam_flash_prepare(fctrl, false);
@@ -221,6 +235,132 @@ int cam_flash_pmic_power_ops(struct cam_flash_ctrl *fctrl,
 
 	return rc;
 }
+
+#ifdef CONFIG_PRODUCT_HEART
+//LENOVO_CUSTOM turn i2c flash off by i2c register begin
+int msm_camera_i2c_flash_off(struct cam_flash_ctrl *fctrl)
+{
+#ifdef ENABLE_I2C_FLASH_READ_REGISTER_CHECK
+	uint32_t reg_value = 0;
+#endif
+	int rc = 0;
+	struct cam_sensor_i2c_reg_setting i2c_reg_settings;
+	struct cam_sensor_i2c_reg_array    i2c_reg_array;
+
+	CAM_INFO(CAM_FLASH, "msm_camera_i2c_flash_off enter");
+
+	i2c_reg_settings.addr_type=CAMERA_SENSOR_I2C_TYPE_BYTE;
+	i2c_reg_settings.data_type=CAMERA_SENSOR_I2C_TYPE_BYTE;
+	i2c_reg_settings.size=1;
+	i2c_reg_settings.delay=0;
+	i2c_reg_array.reg_addr = CAM_I2C_FLASH_AW36423_ENABLE_REGISTER;
+	i2c_reg_array.reg_data = 0x00;
+	i2c_reg_array.delay = 1;
+	i2c_reg_settings.reg_setting = &i2c_reg_array;
+
+	rc = camera_io_dev_write(&(fctrl->io_master_info),
+		&i2c_reg_settings);
+	if (rc < 0) {
+		CAM_ERR(CAM_FLASH,
+			"Failed to random write I2C settings: %d",
+			rc);
+		return rc;
+	}
+
+#ifdef ENABLE_I2C_FLASH_READ_REGISTER_CHECK
+	/* Register 0x00 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_CHIP_ID_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_CHIP_ID_REGISTER,
+			 reg_value);
+
+	/* Register 0x01 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_ENABLE_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_ENABLE_REGISTER,
+			 reg_value);
+
+	/* Register 0x02 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_IVFM_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_IVFM_REGISTER,
+			 reg_value);
+
+	/* Register 0x03 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_LED1_FLASH_BRIGHTNESS_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_LED1_FLASH_BRIGHTNESS_REGISTER,
+			 reg_value);
+
+	/* Register 0x04 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_LED1_TORCH_BRIGHTNESS_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_LED1_TORCH_BRIGHTNESS_REGISTER,
+			 reg_value);
+
+	/* Register 0x05 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_LED2_FLASH_BRIGHTNESS_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_LED2_FLASH_BRIGHTNESS_REGISTER,
+			 reg_value);
+
+	/* Register 0x06 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_LED2_TORCH_BRIGHTNESS_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_LED2_TORCH_BRIGHTNESS_REGISTER,
+			 reg_value);
+
+	/* Register 0x0B */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_FLASH_TORCH_TIMING_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_FLASH_TORCH_TIMING_REGISTER,
+			 reg_value);
+
+	/* Register 0x0F */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_FLAGS_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_FLAGS_REGISTER,
+			 reg_value);
+
+	/* Register 0x10 */
+	camera_io_dev_read(
+		&(fctrl->io_master_info),
+		CAM_I2C_FLASH_AW36423_DEVICE_ID_REGISTER,
+		&reg_value, CAMERA_SENSOR_I2C_TYPE_BYTE,
+		CAMERA_SENSOR_I2C_TYPE_BYTE);
+	CAM_INFO(CAM_FLASH, "### Reg[0x%x]=0x%x ",CAM_I2C_FLASH_AW36423_DEVICE_ID_REGISTER,
+			 reg_value);
+#endif
+	return rc;
+}
+#endif
 
 int cam_flash_i2c_power_ops(struct cam_flash_ctrl *fctrl,
 	bool regulator_enable)
@@ -267,6 +407,15 @@ int cam_flash_i2c_power_ops(struct cam_flash_ctrl *fctrl,
 		fctrl->is_regulator_enabled = true;
 	} else if ((!regulator_enable) &&
 		(fctrl->is_regulator_enabled == true)) {
+#ifdef CONFIG_PRODUCT_HEART
+		//LENOVO_CUSTOM turn i2c flash off by i2c register begin
+		rc = msm_camera_i2c_flash_off(fctrl);
+		if (rc) {
+			CAM_ERR(CAM_FLASH, "i2c flash off is failed:%d",
+				rc);
+		}
+		//LENOVO_CUSTOM turn i2c flash off by i2c register end
+#endif
 		rc = cam_sensor_util_power_down(power_info, soc_info);
 		if (rc) {
 			CAM_ERR(CAM_FLASH, "power down the core is failed:%d",
@@ -454,11 +603,13 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 		for (i = 0; i < flash_ctrl->flash_num_sources; i++) {
 			if (flash_ctrl->flash_trigger[i]) {
 				max_current = soc_private->flash_max_current[i];
+				//LENOVO_START
 				if (flash_data->led_current_ma[i] <=
 					max_current)
-					curr = flash_data->led_current_ma[i];
+					curr = 750;//flash_data->led_current_ma[i];
 				else
-					curr = max_current;
+					curr = 750;//max_current;
+				//LENOVO_END
 			}
 			CAM_DBG(CAM_FLASH, "LED_Flash[%d]: Current: %d",
 				i, curr);
@@ -638,6 +789,10 @@ static int32_t cam_flash_slaveInfo_pkt_parser(struct cam_flash_ctrl *fctrl,
 	if (fctrl->io_master_info.master_type == CCI_MASTER) {
 		fctrl->io_master_info.cci_client->cci_i2c_master =
 			fctrl->cci_i2c_master;
+#ifdef CONFIG_PRODUCT_HEART
+		fctrl->io_master_info.cci_client->cci_device =
+			fctrl->cci_device;
+#endif
 		fctrl->io_master_info.cci_client->i2c_freq_mode =
 			i2c_info->i2c_freq_mode;
 		fctrl->io_master_info.cci_client->sid =
