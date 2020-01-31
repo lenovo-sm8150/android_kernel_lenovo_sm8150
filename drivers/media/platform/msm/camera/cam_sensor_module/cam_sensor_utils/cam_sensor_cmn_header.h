@@ -35,6 +35,12 @@
 #define CAM_FLASH_NAME     "cam-flash"
 #define CAM_EEPROM_NAME    "cam-eeprom"
 #define CAM_OIS_NAME       "cam-ois"
+#ifdef CONFIG_PRODUCT_HEART
+#define CAM_POWER_NAME     "cam-power"
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+#define CAM_POWER_NAME     "cam-power"
+#endif
 
 #define MAX_SYSTEM_PIPELINE_DELAY 2
 
@@ -177,6 +183,17 @@ enum cam_ois_packet_opcodes {
 	CAM_OIS_PACKET_OPCODE_INIT,
 	CAM_OIS_PACKET_OPCODE_OIS_CONTROL
 };
+
+#ifdef CONFIG_PRODUCT_HEART
+enum cam_power_packet_opcodes {
+	CAM_POWER_PACKET_OPCODE_INIT
+};
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+enum cam_power_packet_opcodes {
+	CAM_POWER_PACKET_OPCODE_INIT
+};
+#endif
 
 enum msm_bus_perf_setting {
 	S_INIT,
