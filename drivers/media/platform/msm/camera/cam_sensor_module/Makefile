@@ -1,3 +1,4 @@
+obj-$(CONFIG_SPECTRA_CAMERA) += cam_power/
 obj-$(CONFIG_SPECTRA_CAMERA) += cam_res_mgr/
 obj-$(CONFIG_SPECTRA_CAMERA) += cam_sensor_utils/
 obj-$(CONFIG_SPECTRA_CAMERA) += cam_cci/
