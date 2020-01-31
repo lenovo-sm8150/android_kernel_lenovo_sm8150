@@ -97,7 +97,7 @@ struct mmc_command {
 
 	unsigned int		retries;	/* max number of retries */
 	int			error;		/* command error */
-
+	unsigned int		err_int_mask;	//bh201
 /*
  * Standard errno values are used for errors, but some have specific
  * meaning in the MMC layer:
@@ -113,6 +113,7 @@ struct mmc_command {
  */
 
 	unsigned int		busy_timeout;	/* busy detect timeout in ms */
+	unsigned int		sw_cmd_timeout;
 	/* Set this flag only for blocking sanitize request */
 	bool			sanitize_busy;
 	/* Set this flag only for blocking bkops request */
@@ -130,7 +131,7 @@ struct mmc_data {
 	unsigned int		blk_addr;	/* block address */
 	int			error;		/* data error */
 	unsigned int		flags;
-
+	unsigned int		err_int_mask;
 #define MMC_DATA_WRITE		BIT(8)
 #define MMC_DATA_READ		BIT(9)
 /* Extra flags used by CQE */
