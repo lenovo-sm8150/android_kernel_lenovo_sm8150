@@ -258,6 +258,13 @@ static int dsi_panel_gpio_request(struct dsi_panel *panel)
 	int rc = 0;
 	struct dsi_panel_reset_config *r_config = &panel->reset_config;
 
+	/* temp change*/
+	rc = gpio_request(130, "en_avdd_gpio");
+	if (rc) {
+		pr_err("request for en_avdd_gpio failed, rc=%d\n", rc);
+	}
+	gpio_set_value(130, 1);
+
 	if (gpio_is_valid(r_config->reset_gpio)) {
 		rc = gpio_request(r_config->reset_gpio, "reset_gpio");
 		if (rc) {
@@ -478,8 +485,10 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-	if (gpio_is_valid(panel->reset_config.reset_gpio))
+	if (gpio_is_valid(panel->reset_config.reset_gpio)) {
 		gpio_set_value(panel->reset_config.reset_gpio, 0);
+		usleep_range(10000, 12000);
+	}
 
 	if (gpio_is_valid(panel->reset_config.lcd_mode_sel_gpio))
 		gpio_set_value(panel->reset_config.lcd_mode_sel_gpio, 0);
@@ -544,6 +553,78 @@ error:
 	return rc;
 }
 
+static struct dsi_cmd_desc cmd_elv;
+static int cmd_elv_set = 0;
+static int read_elvss = 0;
+static u8 payload_elvss[2];
+#ifdef CONFIG_DRM_SDE_ELVSS_DIM_OFF
+static int dsi_panel_tx_cmd_set_elvss(struct dsi_panel *panel,
+				enum dsi_cmd_set_type type)
+{
+	int rc = 0, i = 0;
+	ssize_t len;
+	struct dsi_cmd_desc *cmds;
+	u32 count;
+	enum dsi_cmd_set_state state;
+	struct dsi_display_mode *mode;
+	const struct mipi_dsi_host_ops *ops = panel->host->ops;
+	pr_debug("++\n");
+
+	if (!read_elvss)
+		return 0;
+
+	if (!panel || !panel->cur_mode)
+		return -EINVAL;
+
+	mode = panel->cur_mode;
+
+	cmds = mode->priv_info->cmd_sets[type].cmds;
+	count = mode->priv_info->cmd_sets[type].count;
+	state = mode->priv_info->cmd_sets[type].state;
+
+	if (count == 0) {
+		pr_debug("[%s] No commands to be sent for state(%d)\n",
+			 panel->name, type);
+		goto error;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (state == DSI_CMD_SET_STATE_LP) {
+			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
+			cmd_elv.msg.flags |= MIPI_DSI_MSG_USE_LPM;
+		}
+		if (cmds->last_command) {
+			cmds->msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+		}
+
+		if (i == 3  && (cmd_elv_set == 1)) {
+			len = ops->transfer(panel->host, &cmd_elv.msg);
+		} else {
+			len = ops->transfer(panel->host, &cmds->msg);
+		}
+
+		if (len < 0) {
+			rc = len;
+			pr_err("failed to set cmds(%d), rc=%d\n", type, rc);
+			goto error;
+		}
+
+		if (cmds->post_wait_ms)
+			usleep_range(cmds->post_wait_ms*1000,
+					((cmds->post_wait_ms*1000)+10));
+		cmds++;
+	}
+
+	if (cmd_elv_set == 1) {
+		pr_info("elvss data yyy = 0x%x, 0x%x\n", *(u8 *)cmd_elv.msg.tx_buf,
+			*((u8 *)cmd_elv.msg.tx_buf+1));
+	}
+
+error:
+	return rc;
+}
+#endif
+
 static int dsi_panel_pinctrl_deinit(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -604,6 +685,104 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	}
 
 	bl->raw_bd = bd;
+	return 0;
+}
+
+int dsi_panel_set_backlight_hbm(struct dsi_panel *panel,
+	u32 bl_lvl)
+{
+	int rc = 0;
+	struct mipi_dsi_device *dsi;
+
+	if (!panel ) {
+		pr_err("invalid params\n");
+		return -EINVAL;
+	}
+
+	dsi = &panel->mipi_device;
+
+	rc = mipi_dsi_dcs_set_display_brightness_hbm(dsi, bl_lvl);
+	if (rc < 0)
+		pr_err("failed to update dcs backlight:%d\n", bl_lvl);
+
+	return rc;
+}
+
+int dsi_panel_get_elvss_data(struct dsi_panel *panel)
+{
+	int rc = 0;
+	struct mipi_dsi_device *dsi;
+	u8 val;
+	pr_debug(" ++\n");
+
+	if (!panel ) {
+		pr_err("invalid params\n");
+		return -EINVAL;
+	}
+	dsi = &panel->mipi_device;
+
+	rc = mipi_dsi_dcs_get_elvss_data(dsi, &val);
+	if (rc < 0)
+		pr_err("failed to get elvss data\n");
+
+	return rc;
+}
+
+int dsi_panel_get_elvss_data_1(struct dsi_panel *panel)
+{
+	int rc = 0;
+	struct mipi_dsi_device *dsi;
+	u8 val;
+
+	if (!panel ) {
+		pr_err("invalid params\n");
+		return -EINVAL;
+	}
+	dsi = &panel->mipi_device;
+
+	rc = mipi_dsi_dcs_get_elvss_data_1(dsi, &val);
+	if (rc < 0)
+		pr_err("failed to get elvss data\n");
+
+	return rc;
+}
+
+int dsi_panel_set_elvss_dim_off(struct dsi_panel *panel, u8 val)
+{
+	int rc = 0;
+	struct mipi_dsi_device *dsi;
+
+	if (!panel ) {
+		pr_err("invalid params\n");
+		return -EINVAL;
+	}
+	dsi = &panel->mipi_device;
+
+	mipi_dsi_dcs_set_elvss_dim_off(dsi, val&0x7F);
+	read_elvss = 1;
+	return rc;
+}
+
+int dsi_panel_parse_elvss_config(struct dsi_panel *panel, u8 elv_vl)
+{
+	u8 data[] = {0x15, 00, 00, 00, 00, 00, 02, 0xB7, 0x91};
+
+	cmd_elv.msg.type = data[0];
+	cmd_elv.last_command = (data[1] == 1 ? true : false);
+	cmd_elv.msg.channel = data[2];
+	cmd_elv.msg.flags |= (data[3] == 1 ? MIPI_DSI_MSG_REQ_ACK : 0);
+	cmd_elv.msg.ctrl = 0;
+	cmd_elv.post_wait_ms = data[4];
+	cmd_elv.msg.tx_len = ((data[5] << 8) | (data[6]));
+
+	payload_elvss[0] = data[7];
+	payload_elvss[1] = elv_vl & 0x7F;
+	cmd_elv.msg.tx_buf = payload_elvss;
+
+	if (cmd_elv.last_command) {
+		cmd_elv.msg.flags |= MIPI_DSI_MSG_LASTCOMMAND;
+	}
+	cmd_elv_set = 1;
 	return 0;
 }
 
@@ -1728,6 +1907,8 @@ error:
 const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command",
 	"qcom,mdss-dsi-on-command",
+	"qcom,mdss-dsi-hbm-on-command",
+	"qcom,mdss-dsi-hbm-dim-off-command",
 	"qcom,mdss-dsi-post-panel-on-command",
 	"qcom,mdss-dsi-pre-off-command",
 	"qcom,mdss-dsi-off-command",
@@ -4246,6 +4427,9 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 	return rc;
 }
 
+#ifdef CONFIG_BRIGHTNESS_HBM
+extern int dsi_panel_on_hbm;
+#endif
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
@@ -4254,8 +4438,19 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		pr_err("Invalid params\n");
 		return -EINVAL;
 	}
-
+	pr_info("\n");
 	mutex_lock(&panel->panel_lock);
+
+#ifdef CONFIG_BRIGHTNESS_HBM
+        if (dsi_panel_on_hbm == 1) {
+                pr_info("dsi restore hbm\n");
+                rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_HBM_ON);
+                if (rc) {
+                        pr_err("[%s] failed to send DSI_CMD_SET_HBM_ON cmds, rc=%d\n",
+                               panel->name, rc);
+                }
+        }
+#endif
 
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_ON);
 	if (rc)
@@ -4284,6 +4479,15 @@ int dsi_panel_post_enable(struct dsi_panel *panel)
 		       panel->name, rc);
 		goto error;
 	}
+
+#ifdef CONFIG_DRM_SDE_ELVSS_DIM_OFF
+	rc = dsi_panel_tx_cmd_set_elvss(panel, DSI_CMD_SET_HBM_DIM_OFF);
+	if (rc) {
+		pr_err("[%s] failed to send DSI_CMD_SET_ON cmds, rc=%d\n",
+		       panel->name, rc);
+	}
+#endif
+
 error:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
