@@ -54,6 +54,11 @@
 #include "sd_ops.h"
 #include "sdio_ops.h"
 
+#ifdef CONFIG_MMC_SDHCI_MSM_BH201
+#define IC_ADD_FUNCTION  1
+#include "../drivers/mmc/host/sdhci.h"
+#endif
+
 /* If the device is not responding */
 #define MMC_CORE_TIMEOUT_MS	(10 * 60 * 1000) /* 10 minute timeout */
 
@@ -513,7 +518,15 @@ static int mmc_devfreq_set_target(struct device *dev,
 
 	pr_debug("%s: target freq = %lu (%s)\n", mmc_hostname(host),
 		*freq, current->comm);
+#ifdef IC_ADD_FUNCTION
+	{
+		struct sdhci_host *sdhost = mmc_priv(host);
 
+		if (sdhci_bht_target_host(sdhost)) {
+			goto out;
+		}
+	}
+#endif
 	spin_lock_bh(&clk_scaling->lock);
 	if (clk_scaling->curr_freq == *freq ||
 		clk_scaling->skip_clk_scale_freq_update) {
