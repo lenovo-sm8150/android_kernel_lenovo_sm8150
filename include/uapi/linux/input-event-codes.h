@@ -582,6 +582,8 @@
 #define KEY_CAMERA_LEFT		0x219
 #define KEY_CAMERA_RIGHT	0x21a
 
+#define KEY_GESTURE_DC 0x21e
+
 #define KEY_ATTENDANT_ON	0x21b
 #define KEY_ATTENDANT_OFF	0x21c
 #define KEY_ATTENDANT_TOGGLE	0x21d	/* Attendant call on or off */
