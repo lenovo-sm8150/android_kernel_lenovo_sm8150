@@ -23,6 +23,10 @@ enum fsa_function {
 	FSA_EVENT_MAX,
 };
 
+#if defined(CONFIG_PRODUCT_HEART)
+typedef int (*fsa4480_codec_callback)(int);
+void fsa4480_codec_set_callback(fsa4480_codec_callback);
+#endif
 #ifdef CONFIG_QCOM_FSA4480_I2C
 int fsa4480_switch_event(struct device_node *node,
 			 enum fsa_function event);
