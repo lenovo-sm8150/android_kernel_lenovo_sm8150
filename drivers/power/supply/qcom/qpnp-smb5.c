@@ -30,6 +30,19 @@
 #include "smb5-lib.h"
 #include "schgm-flash.h"
 
+#define USB_CHARGE_FAIL_WHEN_SHUTDUWN
+#define CONFIG_COMMON_PRODUCT_SDM855
+#define SUPPORT_BATTERY_AGE
+#define SUPPORT_USER_CHARGE_OP
+
+#ifdef SUPPORT_USER_CHARGE_OP
+static user_charge_op_enable = 0;
+#endif
+
+#ifdef CONFIG_COMMON_PRODUCT_SDM855
+#define ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+#endif
+
 static struct smb_params smb5_pmi632_params = {
 	.fcc			= {
 		.name   = "fast charge current",
@@ -233,7 +246,12 @@ struct smb5 {
 	struct smb_dt_props	dt;
 };
 
-static int __debug_mask;
+#ifdef CONFIG_PRODUCT_ZIPPO
+	static int __debug_mask = 0xff;
+#else
+	static int __debug_mask;
+#endif
+
 module_param_named(
 	debug_mask, __debug_mask, int, 0600
 );
@@ -415,6 +433,10 @@ static int smb5_parse_dt(struct smb5 *chip)
 		chip->dt.sec_charger_config == POWER_SUPPLY_CHARGER_SEC_PL ||
 		chip->dt.sec_charger_config == POWER_SUPPLY_CHARGER_SEC_CP_PL;
 
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+        chg->chg_enabled = !(of_property_read_bool(node,
+                                "qcom,charging-disabled"));
+#endif
 	chg->step_chg_enabled = of_property_read_bool(node,
 				"qcom,step-charging-enable");
 
@@ -762,6 +784,18 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 		rc = smblib_get_prop_usb_online(chg, val);
 		if (!val->intval)
 			break;
+#ifdef USB_CHARGE_FAIL_WHEN_SHUTDUWN
+                if ((chg->real_charger_type == POWER_SUPPLY_TYPE_USB)
+                                || (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP)
+                                || (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3)
+				|| (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_PD)
+                                || (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_DCP)
+                                || (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_CDP)
+                                || (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_FLOAT))
+                        val->intval = 1;
+                else
+                        val->intval = 0;
+#else
 
 		if (((chg->typec_mode == POWER_SUPPLY_TYPEC_SOURCE_DEFAULT) ||
 		   (chg->connector_type == POWER_SUPPLY_CONNECTOR_MICRO_USB))
@@ -769,6 +803,7 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 			val->intval = 0;
 		else
 			val->intval = 1;
+#endif
 
 		if (chg->real_charger_type == POWER_SUPPLY_TYPE_UNKNOWN)
 			val->intval = 0;
@@ -1573,6 +1608,15 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_TERM_CURRENT,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+	POWER_SUPPLY_PROP_CHARGING_ENABLED,
+#endif
+#ifdef SUPPORT_BATTERY_AGE
+	POWER_SUPPLY_PROP_AGE,
+#endif
+#ifdef SUPPORT_USER_CHARGE_OP
+	POWER_SUPPLY_PROP_USER_CHARGE_OP,
+#endif
 	POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED,
 	POWER_SUPPLY_PROP_SW_JEITA_ENABLED,
 	POWER_SUPPLY_PROP_CHARGE_DONE,
@@ -1635,6 +1679,22 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED:
 		rc = smblib_get_prop_input_current_limited(chg, val);
 		break;
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+	 case POWER_SUPPLY_PROP_CHARGING_ENABLED:
+                val->intval = chg->chg_enabled;
+                pr_info("charge test mode:get chg_enable is %d\n",chg->chg_enabled);
+                break;
+#endif
+#ifdef SUPPORT_BATTERY_AGE
+	case POWER_SUPPLY_PROP_AGE:
+		rc = smblib_get_prop_batt_age(chg, val);
+		break;
+#endif
+#ifdef SUPPORT_USER_CHARGE_OP
+	case POWER_SUPPLY_PROP_USER_CHARGE_OP:
+		val->intval = user_charge_op_enable;
+		break;
+#endif
 	case POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED:
 		val->intval = chg->step_chg_enabled;
 		break;
@@ -1782,6 +1842,28 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 		vote(chg->fv_votable, QNOVO_VOTER, (val->intval >= 0),
 			val->intval);
 		break;
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
+                smblib_set_usb_suspend(chg, !val->intval);
+                vote(chg->chg_disable_votable, DISABLE_CHARGER, !val->intval, 0);
+                chg->chg_enabled = val->intval;
+                pr_info("charge test mode:set chg_enable is %d\n",val->intval);
+                break;
+#endif
+#ifdef SUPPORT_USER_CHARGE_OP
+#define USER_CHARGE_OP_FCC_UA	2000000
+	case POWER_SUPPLY_PROP_USER_CHARGE_OP:
+		pr_info("set user_charge_op to %d\n", user_charge_op_enable);
+		user_charge_op_enable = !!val->intval;
+		if (user_charge_op_enable) {
+			vote(chg->fcc_votable, FCC_USER_CHARGE_OP_VOTER, true, USER_CHARGE_OP_FCC_UA);
+			pr_info("enable user_charge_op %ld\n", USER_CHARGE_OP_FCC_UA);
+		} else {
+			vote(chg->fcc_votable, FCC_USER_CHARGE_OP_VOTER, false, 0);
+			pr_info("disable user_charge_op\n");
+		}
+		break;
+#endif
 	case POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED:
 		chg->step_chg_enabled = !!val->intval;
 		break;
@@ -1858,6 +1940,12 @@ static int smb5_batt_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_DP_DM:
 	case POWER_SUPPLY_PROP_RERUN_AICL:
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED:
+#ifdef ADD_DISABLE_CHARGING_INTERFACE_FOR_TESTMODE
+	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
+#endif
+#ifdef SUPPORT_USER_CHARGE_OP
+	case POWER_SUPPLY_PROP_USER_CHARGE_OP:
+#endif
 	case POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED:
 	case POWER_SUPPLY_PROP_DIE_HEALTH:
 		return 1;

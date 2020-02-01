@@ -362,6 +362,11 @@ static ssize_t enable_store(struct class *c, struct class_attribute *attr,
 		return -EINVAL;
 
 	vote(chip->disable_votable, USER_VOTER, !val, 0);
+	if ( !val )
+		pr_info("disable smb1390 charge pump\n");
+	else
+		pr_info("enable smb1390 charge pump\n");
+
 	return count;
 }
 static CLASS_ATTR_RW(enable);
