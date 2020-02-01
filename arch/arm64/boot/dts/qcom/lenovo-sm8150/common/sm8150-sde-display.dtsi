@@ -10,7 +10,7 @@
 
                 qcom,dsi-ctrl-num = <0>;
                 qcom,dsi-phy-num = <0>;
-                qcom,dsi-select-clocks = "src_byte_clk0", "src_pixel_clk0";
+                qcom,dsi-select-clocks =  "mux_byte_clk0", "mux_pixel_clk0";
 
                 qcom,dsi-panel = <&dsi_smd639_amoled_fhd_cmd>;
         };
@@ -21,7 +21,7 @@
 
                 qcom,dsi-ctrl-num = <0>;
                 qcom,dsi-phy-num = <0>;
-                qcom,dsi-select-clocks = "src_byte_clk0", "src_pixel_clk0";
+                qcom,dsi-select-clocks =  "mux_byte_clk0", "mux_pixel_clk0";
 
                 qcom,dsi-panel = <&dsi_tianma_nt37700_amoled_cmd>;
         };
