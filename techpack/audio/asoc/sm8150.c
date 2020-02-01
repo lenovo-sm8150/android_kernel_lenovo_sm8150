@@ -41,7 +41,7 @@
 #include "codecs/wcd-mbhc-v2.h"
 #include <linux/mfd/madera/registers.h>
 #include <linux/mfd/madera/core.h>
-#include <sound/soc/codecs/madera.h>
+#include <codecs/cirrus/madera.h>
 
 #define DRV_NAME "sm8150-asoc-snd"
 
