@@ -17,6 +17,12 @@
 #include <linux/i2c.h>
 #include <linux/mutex.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio.h>
+#include <linux/regulator/consumer.h>
+#include <linux/regulator/of_regulator.h>
 
 #define FSA4480_I2C_NAME	"fsa4480-driver"
 
@@ -43,6 +49,10 @@ struct fsa4480_priv {
 	struct work_struct usbc_analog_work;
 	struct blocking_notifier_head fsa4480_notifier;
 	struct mutex notification_lock;
+	#if defined(CONFIG_PRODUCT_HEART)
+	struct delayed_work first_headset_work;
+	int32_t codec_det_gpio;
+	#endif
 };
 
 struct fsa4480_reg_val {
@@ -69,6 +79,21 @@ static const struct fsa4480_reg_val fsa_reg_i2c_defaults[] = {
 	{FSA4480_SWITCH_SETTINGS, 0x98},
 };
 
+#if defined(CONFIG_PRODUCT_HEART_SW_SOLUTION)
+int codec_callback_dummy(int state)
+{
+	pr_info("%s\n", __func__);
+	return 0;
+}
+
+fsa4480_codec_callback p_codec_cb = codec_callback_dummy;
+
+void fsa4480_codec_set_callback(fsa4480_codec_callback cb)
+{
+	p_codec_cb = cb;
+}
+EXPORT_SYMBOL(fsa4480_codec_set_callback);
+#endif
 static void fsa4480_usbc_update_settings(struct fsa4480_priv *fsa_priv,
 		u32 switch_control, u32 switch_enable)
 {
@@ -83,6 +108,50 @@ static void fsa4480_usbc_update_settings(struct fsa4480_priv *fsa_priv,
 	usleep_range(50, 55);
 	regmap_write(fsa_priv->regmap, FSA4480_SWITCH_SETTINGS, switch_enable);
 }
+
+#if defined(CONFIG_PRODUCT_HEART)
+static int fsa4480_first_dump = 1;
+static int fsa4480_usbc_update_settings_return(struct fsa4480_priv *fsa_priv,
+		u32 switch_control, u32 switch_enable)
+{
+	int ret = 0;
+	if (!fsa_priv->regmap) {
+		dev_err(fsa_priv->dev, "%s: regmap invalid\n", __func__);
+		return -1;
+	}
+
+	ret = regmap_write(fsa_priv->regmap, FSA4480_RESET, 0x01);
+
+	ret = regmap_write(fsa_priv->regmap, FSA4480_SWITCH_SETTINGS, 0x80);
+	ret = regmap_write(fsa_priv->regmap, FSA4480_SWITCH_CONTROL, switch_control);
+	/* FSA4480 chip hardware requirement */
+	usleep_range(50, 55);
+	ret = regmap_write(fsa_priv->regmap, FSA4480_SWITCH_SETTINGS, switch_enable);
+	return ret;
+}
+
+static int fsa4480_usbc_dump_register(struct fsa4480_priv *fsa_priv)
+{
+	int ret = 0;
+	int i=0;
+	u32 switch_setting;
+	if (!fsa_priv->regmap) {
+		dev_err(fsa_priv->dev, "%s: regmap invalid\n", __func__);
+		return -1;
+	}
+    dev_info(fsa_priv->dev,"%s:********regdump***********\n",__func__);
+	for(i;i<16;i++){
+		regmap_read(fsa_priv->regmap,i,&switch_setting);
+		dev_info(fsa_priv->dev,"%x---->%x",i,switch_setting);
+		}
+	dev_info(fsa_priv->dev,"%s:********end***********\n",__func__);
+
+
+	/* FSA4480 chip hardware requirement */
+	return ret;
+}
+
+#endif
 
 static int fsa4480_usbc_event_changed(struct notifier_block *nb,
 				      unsigned long evt, void *ptr)
@@ -112,7 +181,7 @@ static int fsa4480_usbc_event_changed(struct notifier_block *nb,
 		return ret;
 	}
 
-	dev_dbg(dev, "%s: USB change event received, supply mode %d, usbc mode %d, expected %d\n",
+	dev_info(dev, "%s: USB change event received, supply mode %d, usbc mode %d, expected %d\n",
 		__func__, mode.intval, fsa_priv->usbc_mode.counter,
 		POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER);
 
@@ -123,7 +192,7 @@ static int fsa4480_usbc_event_changed(struct notifier_block *nb,
 			break; /* filter notifications received before */
 		atomic_set(&(fsa_priv->usbc_mode), mode.intval);
 
-		dev_dbg(dev, "%s: queueing usbc_analog_work\n",
+		dev_info(dev, "%s: queueing usbc_analog_work\n",
 			__func__);
 		pm_stay_awake(fsa_priv->dev);
 		schedule_work(&fsa_priv->usbc_analog_work);
@@ -162,7 +231,29 @@ static int fsa4480_usbc_analog_setup_switches(struct fsa4480_priv *fsa_priv)
 	/* add all modes FSA should notify for in here */
 	case POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER:
 		/* activate switches */
+#if defined(CONFIG_PRODUCT_HEART)
+                if (fsa4480_first_dump){
+                        msleep(100);
+                }
+                rc = fsa4480_usbc_update_settings_return(fsa_priv, 0x00, 0x9F);
+                dev_info(fsa_priv->dev, "%s: fsa4480_usbc_update_settings_return return= %d\n",
+                __func__, rc);
+                if (fsa4480_first_dump){
+                        fsa4480_usbc_dump_register(fsa_priv);
+                        fsa4480_first_dump = 0;
+                }
+                gpio_direction_output(fsa_priv->codec_det_gpio, 0);
+		if(rc != 0){
+                	schedule_delayed_work(&fsa_priv->first_headset_work,
+                        msecs_to_jiffies(20000));
+        	}
+#else
 		fsa4480_usbc_update_settings(fsa_priv, 0x00, 0x9F);
+
+#endif
+#if defined(CONFIG_PRODUCT_HEART_SW_SOLUTION)
+                p_codec_cb(1);
+#endif
 
 		/* notify call chain on event */
 		blocking_notifier_call_chain(&fsa_priv->fsa4480_notifier,
@@ -172,6 +263,12 @@ static int fsa4480_usbc_analog_setup_switches(struct fsa4480_priv *fsa_priv)
 		/* notify call chain on event */
 		blocking_notifier_call_chain(&fsa_priv->fsa4480_notifier,
 				POWER_SUPPLY_TYPEC_NONE, NULL);
+#if defined(CONFIG_PRODUCT_HEART_SW_SOLUTION)
+                p_codec_cb(0);
+#endif
+#if defined(CONFIG_PRODUCT_HEART)
+                gpio_direction_output(fsa_priv->codec_det_gpio, 1);
+#endif
 
 		/* deactivate switches */
 		fsa4480_usbc_update_settings(fsa_priv, 0x18, 0x98);
@@ -251,6 +348,13 @@ int fsa4480_unreg_notifier(struct notifier_block *nb,
 	dev = fsa_priv->dev;
 	if (!dev)
 		return -EINVAL;
+
+#if defined(CONFIG_PRODUCT_HEART)//fix boot with type-c headset
+	if (atomic_read(&(fsa_priv->usbc_mode)) != POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER)
+		atomic_set(&(fsa_priv->usbc_mode), 0);
+#else
+	atomic_set(&(fsa_priv->usbc_mode), 0);
+#endif
 
 	mutex_lock(&fsa_priv->notification_lock);
 	/* get latest mode within locked context */
@@ -337,6 +441,23 @@ int fsa4480_switch_event(struct device_node *node,
 }
 EXPORT_SYMBOL(fsa4480_switch_event);
 
+#if defined(CONFIG_PRODUCT_HEART)
+static void first_headset_work_work_fn(struct work_struct *work)
+{
+	int ret = 0;
+	struct fsa4480_priv *fsa_priv =
+		container_of(work, struct fsa4480_priv, first_headset_work.work);
+
+	gpio_direction_output(fsa_priv->codec_det_gpio, 1);
+	msleep(50);
+	gpio_direction_output(fsa_priv->codec_det_gpio, 0);
+
+	ret = fsa4480_usbc_update_settings_return(fsa_priv, 0x00, 0x9F);
+	dev_info(fsa_priv->dev, "%s: setting first_headset_work  ret=%d\n",__func__,ret);
+}
+#endif
+
+
 static void fsa4480_usbc_analog_work_fn(struct work_struct *work)
 {
 	struct fsa4480_priv *fsa_priv =
@@ -364,6 +485,9 @@ static int fsa4480_probe(struct i2c_client *i2c,
 {
 	struct fsa4480_priv *fsa_priv;
 	int rc = 0;
+	#if defined(CONFIG_PRODUCT_HEART)
+	struct device_node *node;
+	#endif
 
 	fsa_priv = devm_kzalloc(&i2c->dev, sizeof(*fsa_priv),
 				GFP_KERNEL);
@@ -380,7 +504,30 @@ static int fsa4480_probe(struct i2c_client *i2c,
 			__func__, rc);
 		goto err_data;
 	}
+#if defined(CONFIG_PRODUCT_HEART)
+	node = fsa_priv->dev->of_node;
+	fsa_priv->codec_det_gpio= of_get_named_gpio(node, "fsa_codec_det-gpios", 0);
+	if (fsa_priv->codec_det_gpio< 0) {
+		dev_err(fsa_priv->dev, "Unable to get \"fsa_codec_det\"\n");
+		fsa_priv->codec_det_gpio = -2;
+	}
+	else {
+		dev_info(fsa_priv->dev, "fsa_priv->codec_det_gpio = %d\n", fsa_priv->codec_det_gpio);
+	}
 
+	if (gpio_is_valid(fsa_priv->codec_det_gpio)) {
+		if (0 == gpio_request(fsa_priv->codec_det_gpio, "fsa4480-det")) {
+			gpio_direction_output(fsa_priv->codec_det_gpio, 1);
+		}
+		else {
+			dev_err(fsa_priv->dev, "fsa_priv->codec_det_gpio: gpio_request fail\n");
+		}
+	}
+	else {
+		dev_err(fsa_priv->dev, "fsa_priv->codec_det_gpio is invalid: %d\n", fsa_priv->codec_det_gpio);
+	}
+	dev_info(fsa_priv->dev, "success to enable fsa_priv->codec_det_gpio \n");
+#endif
 	fsa_priv->regmap = devm_regmap_init_i2c(i2c, &fsa4480_regmap_config);
 	if (IS_ERR_OR_NULL(fsa_priv->regmap)) {
 		dev_err(fsa_priv->dev, "%s: Failed to initialize regmap: %d\n",
@@ -409,6 +556,10 @@ static int fsa4480_probe(struct i2c_client *i2c,
 
 	INIT_WORK(&fsa_priv->usbc_analog_work,
 		  fsa4480_usbc_analog_work_fn);
+
+#if defined(CONFIG_PRODUCT_HEART)
+	INIT_DELAYED_WORK(&fsa_priv->first_headset_work, first_headset_work_work_fn);
+#endif
 
 	fsa_priv->fsa4480_notifier.rwsem =
 		(struct rw_semaphore)__RWSEM_INITIALIZER
