@@ -1321,6 +1321,7 @@ static int qusb_phy_probe(struct platform_device *pdev)
 		return PTR_ERR(qphy->vdda18);
 	}
 
+	msm_hsphy_enable_power(phy, true);
 	mutex_init(&qphy->phy_lock);
 	platform_set_drvdata(pdev, qphy);
 
@@ -1369,6 +1370,7 @@ static int qusb_phy_probe(struct platform_device *pdev)
 
 	qphy->suspended = true;
 
+	msm_hsphy_enable_power(phy, false);
 	return ret;
 }
 
