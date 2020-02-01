@@ -1,1 +1,14 @@
+config SND_SOC_TFA9874
+	tristate "SND_SOC_TFA9874"
+config SND_SOC_CS35L41
+	tristate "SND_SOC_CS35L41"
+config SND_SOC_CS35L41_I2C
+	tristate "CONFIG_SND_SOC_CS35L41_I2C"
+config SND_SOC_CS35L41_SPI
+	tristate "SND_SOC_CS35L41_SPI"
+config SND_SOC_CS47L35
+	tristate "SND_SOC_CS47L35"
+config SND_SOC_MADERA
+	tristate "SND_SOC_MADERA"
+
 source "techpack/audio/asoc/Kconfig"
