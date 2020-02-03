@@ -67,7 +67,7 @@
 				qcom,mdss-dsi-panel-width = <1080>;
 				qcom,mdss-dsi-panel-height = <2340>;
 				qcom,mdss-dsi-panel-framerate = <60>;
-				/*qcom,mdss-dsi-panel-clockrate = <814000000>;*/
+				qcom,mdss-dsi-panel-clockrate = <1107000000>;
 				qcom,mdss-dsi-h-front-porch = <44>;
 				qcom,mdss-dsi-h-back-porch = <32>;
 				qcom,mdss-dsi-h-pulse-width = <12>;
