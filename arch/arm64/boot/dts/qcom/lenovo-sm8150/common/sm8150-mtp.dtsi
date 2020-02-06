@@ -9,8 +9,10 @@
 };
 
 &soc {
-
-    /delete-node/ qcom,qbt1000;
+	qcom,qbt1000 {
+		status = "disabled";
+	};
+//    /delete-node/ qcom,qbt1000;
 };
 
 &snd_9360 {
