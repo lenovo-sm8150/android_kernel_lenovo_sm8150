@@ -423,9 +423,9 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	if (QUERYBIT(gsx_gesture->gesture_type, temp_data[2])) {
 		/* do resume routine */
 		ts_info("Gesture match success, resume IC");
-		input_report_key(core_data->input_dev, KEY_GESTURE_DC, 1);
+		input_report_key(core_data->input_dev, KEY_FINANCE, 1);
 		input_sync(core_data->input_dev);
-		input_report_key(core_data->input_dev, KEY_GESTURE_DC, 0);
+		input_report_key(core_data->input_dev, KEY_FINANCE, 0);
 		input_sync(core_data->input_dev);
 		goto gesture_ist_exit;
 	} else {
