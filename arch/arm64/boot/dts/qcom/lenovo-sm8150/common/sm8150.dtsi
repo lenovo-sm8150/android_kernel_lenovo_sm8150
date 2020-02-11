@@ -105,4 +105,8 @@
 		console-size = <0x50000>;
 		pmsg-size = <0x50000>;
 	};
+
+	restart@c264000 {
+	    qcom,force-warm-reboot;
+	};
 };
