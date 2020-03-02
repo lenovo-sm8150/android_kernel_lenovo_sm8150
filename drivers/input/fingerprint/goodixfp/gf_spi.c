@@ -978,8 +978,9 @@ static int gf_probe(struct platform_device *pdev)
     pr_info("------%s,%d------status=%d\n",__func__, __LINE__);
     status = gf_parse_dts(gf_dev);
     pr_info("------%s,%d------status=%d\n",__func__, __LINE__, status);
-    if (status)
+    if (status) {
         goto error_hw;
+    }
 
 	/* If we can allocate a minor number, hook up this device.
 	 * Reusing minors is fine so long as udev or mdev is working.
