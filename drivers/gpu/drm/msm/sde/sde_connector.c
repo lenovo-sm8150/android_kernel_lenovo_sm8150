@@ -78,7 +78,7 @@ enum {
 
 static int sde_backlight_device_hbm_update_status(struct backlight_device *bd)
 {
-	int brightness;
+	int brightness = 0;
 	struct sde_connector *c_conn;
 	int bl_lvl;
 	/* struct drm_event event; */
