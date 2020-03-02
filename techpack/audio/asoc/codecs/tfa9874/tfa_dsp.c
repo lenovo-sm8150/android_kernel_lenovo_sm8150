@@ -3487,7 +3487,7 @@ int tfa_dev_probe(int slave, struct tfa_device *tfa)
 
 enum Tfa98xx_Error tfa_dev_set_state(struct tfa_device *tfa, enum tfa_state state)
 {
-	enum Tfa98xx_Error err = Tfa98xx_Error_Ok;
+	enum tfa_error err = tfa_error_ok;
 	int loop = 50, ready = 0;
 	int count;
 

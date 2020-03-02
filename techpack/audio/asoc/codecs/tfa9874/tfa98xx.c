@@ -201,9 +201,9 @@ static inline char *tfa_cont_profile_name(struct tfa98xx *tfa98xx, int prof_idx)
 	return tfaContProfileName(tfa98xx->tfa->cnt, tfa98xx->tfa->dev_idx, prof_idx);
 }
 
-static enum Tfa98xx_Error tfa98xx_write_re25(struct tfa_device *tfa, int value)
+static enum tfa_error tfa98xx_write_re25(struct tfa_device *tfa, int value)
 {
-	enum Tfa98xx_Error err;
+	enum tfa_error err;
 
 	/* clear MTPEX */
 	err = tfa_dev_mtp_set(tfa, TFA_MTP_EX, 0);
@@ -220,9 +220,9 @@ static enum Tfa98xx_Error tfa98xx_write_re25(struct tfa_device *tfa, int value)
 }
 
 /* Wrapper for tfa start */
-static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profile, int vstep)
+static enum tfa_error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profile, int vstep)
 {
-	enum Tfa98xx_Error err;
+	enum tfa_error err;
 	ktime_t start_time = 0, stop_time = 0;
 	u64 delta_time;
 
@@ -241,7 +241,7 @@ static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_pr
 	}
 
 	if ((err == tfa_error_ok) && (tfa98xx->set_mtp_cal)) {
-		enum Tfa98xx_Error err_cal;
+		enum tfa_error err_cal;
 		err_cal = tfa98xx_write_re25(tfa98xx->tfa, tfa98xx->cal_data);
 		if (err_cal != tfa_error_ok) {
 			pr_err("Error, setting calibration value in mtp, err=%d\n", err_cal);
@@ -428,7 +428,7 @@ static int tfa98xx_dbgfs_otc_set(void *data, u64 val)
 {
 	struct i2c_client *i2c = (struct i2c_client *)data;
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
-	enum Tfa98xx_Error err;
+	enum tfa_error err;
 
 	if (val != 0 && val != 1) {
 		pr_err("[0x%x] Unexpected value %llu\n", tfa98xx->i2c->addr, val);
@@ -475,7 +475,7 @@ static int tfa98xx_dbgfs_mtpex_set(void *data, u64 val)
 {
 	struct i2c_client *i2c = (struct i2c_client *)data;
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
-	enum Tfa98xx_Error err;
+	enum tfa_error err;
 
 	if (val != 0) {
 		pr_err("[0x%x] Can only clear MTPEX (0 value expected)\n", tfa98xx->i2c->addr);
@@ -530,7 +530,7 @@ static ssize_t tfa98xx_dbgfs_start_set(struct file *file,
 {
 	struct i2c_client *i2c = file->private_data;
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
-	enum Tfa98xx_Error ret;
+	enum tfa_error ret;
 	char buf[32];
 	const char ref[] = "please calibrate now";
 	int buf_size;
@@ -1489,7 +1489,7 @@ static int tfa98xx_set_cal_ctl(struct snd_kcontrol *kcontrol,
 
 	mutex_lock(&tfa98xx_mutex);
 	list_for_each_entry(tfa98xx, &tfa98xx_device_list, list) {
-		enum Tfa98xx_Error err;
+		enum tfa_error err;
 		int i = tfa98xx->tfa->dev_idx;
 
 		tfa98xx->cal_data = (uint16_t)ucontrol->value.integer.value[i];
