@@ -1095,7 +1095,7 @@ int mipi_dsi_dcs_set_display_brightness_hbm(struct mipi_dsi_device *dsi,
 		0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0xac, 0x84};
 	u8 dim_dis = 0x20;
 	u8 dim_en = 0x28;
-	ssize_t err;
+	ssize_t err = 0;
 
 	if (dsi_display_id ==0) { /* samsung panel */
 		if (brightness == 1)
