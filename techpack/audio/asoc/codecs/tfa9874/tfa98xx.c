@@ -223,7 +223,7 @@ static enum Tfa98xx_Error tfa98xx_write_re25(struct tfa_device *tfa, int value)
 static enum Tfa98xx_Error tfa98xx_tfa_start(struct tfa98xx *tfa98xx, int next_profile, int vstep)
 {
 	enum Tfa98xx_Error err;
-	ktime_t start_time, stop_time;
+	ktime_t start_time = 0, stop_time = 0;
 	u64 delta_time;
 
 	if (trace_level & 8) {
