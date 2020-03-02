@@ -39,7 +39,7 @@
 #define SUPPORT_USER_CHARGE_OP
 
 #ifdef SUPPORT_USER_CHARGE_OP
-static user_charge_op_enable = 0;
+static int user_charge_op_enable = 0;
 #endif
 
 #ifdef CONFIG_COMMON_PRODUCT_SDM855
