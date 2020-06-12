@@ -97,6 +97,7 @@ struct stmmac_priv {
 	struct device *device;
 	struct mac_device_info *hw;
 
+
 	/* Mutex lock */
 	struct mutex lock;
 
