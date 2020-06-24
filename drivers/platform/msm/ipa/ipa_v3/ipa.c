@@ -8441,12 +8441,14 @@ void ipa_pc_qmp_enable(void)
 /**************************************************************
  *            PCIe Version
  *************************************************************/
-
 int ipa3_pci_drv_probe(
 	struct pci_dev            *pci_dev,
 	struct ipa_api_controller *api_ctrl,
 	const struct of_device_id *pdrv_match)
 {
+#ifndef CONFIG_PCI
+	return -ENXIO;
+#else
 	int result;
 	struct ipa3_plat_drv_res *ipa_drv_res;
 	u32 bar0_offset;
@@ -8600,6 +8602,7 @@ int ipa3_pci_drv_probe(
 	}
 
 	return result;
+#endif
 }
 
 /*
