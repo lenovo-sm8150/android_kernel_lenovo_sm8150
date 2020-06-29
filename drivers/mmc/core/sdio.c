@@ -805,10 +805,7 @@ try_again:
 			goto try_again;
 		}
 		return err;
-	}
-#ifdef CONFIG_MMC_EMBEDDED_SDIO
-        }
-#endif
+		}
 
 #ifdef CONFIG_MMC_EMBEDDED_SDIO
 	if (host->embedded_sdio_data.cis)
