@@ -3,7 +3,7 @@
  *
  * This code is based on drivers/scsi/ufs/ufshcd.c
  * Copyright (C) 2011-2013 Samsung India Software Operations
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  *
  * Authors:
  *	Santosh Yaraganavi <santosh.sy@samsung.com>
@@ -413,6 +413,8 @@ static struct ufs_dev_fix ufs_fixups[] = {
 	UFS_FIX(UFS_VENDOR_TOSHIBA, UFS_ANY_MODEL,
 		UFS_DEVICE_QUIRK_DELAY_BEFORE_LPM),
 	UFS_FIX(UFS_VENDOR_TOSHIBA, UFS_ANY_MODEL,
+		UFS_DEVICE_QUIRK_NO_LINK_OFF),
+	UFS_FIX(UFS_VENDOR_WDC, UFS_ANY_MODEL,
 		UFS_DEVICE_QUIRK_NO_LINK_OFF),
 	UFS_FIX(UFS_VENDOR_TOSHIBA, "THGLF2G9C8KBADG",
 		UFS_DEVICE_QUIRK_PA_TACTIVATE),
@@ -5281,6 +5283,7 @@ static int ufshcd_link_recovery(struct ufs_hba *hba)
 	 */
 	hba->ufshcd_state = UFSHCD_STATE_ERROR;
 	hba->force_host_reset = true;
+	ufshcd_set_eh_in_progress(hba);
 	schedule_work(&hba->eh_work);
 
 	/* wait for the reset work to finish */
