@@ -212,7 +212,7 @@ static const struct kgsl_hwcg_reg a615_hwcg_regs[] = {
 	{A6XX_RBBM_CLOCK_DELAY_UCHE, 0x00000002},
 	{A6XX_RBBM_CLOCK_CNTL_RB0, 0x22222222},
 	{A6XX_RBBM_CLOCK_CNTL2_RB0, 0x00002222},
-	{A6XX_RBBM_CLOCK_CNTL_CCU0, 0x00002220},
+	{A6XX_RBBM_CLOCK_CNTL_CCU0, 0x00002020},
 	{A6XX_RBBM_CLOCK_CNTL_CCU1, 0x00002220},
 	{A6XX_RBBM_CLOCK_CNTL_CCU2, 0x00002220},
 	{A6XX_RBBM_CLOCK_CNTL_CCU3, 0x00002220},
@@ -2957,6 +2957,9 @@ static void a6xx_platform_setup(struct adreno_device *adreno_dev)
 	} else
 		gpudev->vbif_xin_halt_ctrl0_mask =
 				A6XX_VBIF_XIN_HALT_CTRL0_MASK;
+
+	if (ADRENO_FEATURE(adreno_dev, ADRENO_SPTP_PC))
+		set_bit(ADRENO_SPTP_PC_CTRL, &adreno_dev->pwrctrl_flag);
 
 	/* Check efuse bits for various capabilties */
 	a6xx_check_features(adreno_dev);

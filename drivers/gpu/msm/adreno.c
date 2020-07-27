@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2007-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -104,9 +104,7 @@ static struct adreno_device device_3d0 = {
 	.long_ib_detect = 1,
 	.input_work = __WORK_INITIALIZER(device_3d0.input_work,
 		adreno_input_work),
-	.pwrctrl_flag = BIT(ADRENO_SPTP_PC_CTRL) | BIT(ADRENO_PPD_CTRL) |
-		BIT(ADRENO_LM_CTRL) | BIT(ADRENO_HWCG_CTRL) |
-		BIT(ADRENO_THROTTLING_CTRL),
+	.pwrctrl_flag = BIT(ADRENO_HWCG_CTRL) | BIT(ADRENO_THROTTLING_CTRL),
 	.profile.enabled = false,
 	.active_list = LIST_HEAD_INIT(device_3d0.active_list),
 	.active_list_lock = __SPIN_LOCK_UNLOCKED(device_3d0.active_list_lock),
@@ -613,6 +611,9 @@ static irqreturn_t adreno_irq_handler(struct kgsl_device *device)
 	unsigned int status = 0, fence = 0, fence_retries = 0, tmp, int_bit;
 	unsigned int shadow_status = 0;
 	int i;
+	u64 ts, ts1, ts2;
+
+	ts = gmu_core_dev_read_ao_counter(device);
 
 	atomic_inc(&adreno_dev->pending_irq_refcnt);
 	/* Ensure this increment is done before the IRQ status is updated */
@@ -639,6 +640,8 @@ static irqreturn_t adreno_irq_handler(struct kgsl_device *device)
 				&fence);
 
 		while (fence != 0) {
+			ts1 =  gmu_core_dev_read_ao_counter(device);
+
 			/* Wait for small time before trying again */
 			udelay(1);
 			adreno_readreg(adreno_dev,
@@ -646,18 +649,19 @@ static irqreturn_t adreno_irq_handler(struct kgsl_device *device)
 					&fence);
 
 			if (fence_retries == FENCE_RETRY_MAX && fence != 0) {
+				ts2 =  gmu_core_dev_read_ao_counter(device);
+
 				adreno_readreg(adreno_dev,
 					ADRENO_REG_GMU_RBBM_INT_UNMASKED_STATUS,
 					&shadow_status);
 
 				KGSL_DRV_CRIT_RATELIMIT(device,
-					"Status=0x%x Unmasked status=0x%x Mask=0x%x\n",
+					"Status=0x%x Unmasked status=0x%x Timestamps:%llx %llx %llx\n",
 					shadow_status & irq_params->mask,
-					shadow_status, irq_params->mask);
+					shadow_status, ts, ts1, ts2);
 				adreno_set_gpu_fault(adreno_dev,
 						ADRENO_GMU_FAULT);
-				adreno_dispatcher_schedule(KGSL_DEVICE
-						(adreno_dev));
+				adreno_dispatcher_schedule(device);
 				goto done;
 			}
 			fence_retries++;

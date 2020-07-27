@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -219,9 +219,7 @@ struct cam_isp_context_event_record {
  * @req_isp:                   ISP private request object storage
  * @hw_ctx:                    HW object returned by the acquire device command
  * @sof_timestamp_val:         Captured time stamp value at sof hw event
- * @prev_sof_timestamp_val     Holds last notified sof time stamp
  * @boot_timestamp:            Boot time stamp for a given req_id
- * @prev_boot_timestamp        Holds last notified boot time stamp
  * @active_req_cnt:            Counter for the active request
  * @subscribe_event:           The irq event mask that CRM subscribes to, IFE
  *                             will invoke CRM cb at those event.
@@ -239,7 +237,8 @@ struct cam_isp_context_event_record {
  * @irq_delay_detect:          Indicate whether a irq delay has detected or not
  * @irq_timestamps:            Timestamp from last handled IRQ
  * @fps:                       Current FPS for the activated state.
- *
+ * @bubble_frame_cnt:          Count number of frames since the req is in
+ *                             bubble
  */
 struct cam_isp_context {
 	struct cam_context              *base;
@@ -255,9 +254,7 @@ struct cam_isp_context {
 
 	void                            *hw_ctx;
 	uint64_t                         sof_timestamp_val;
-	uint64_t                         prev_sof_timestamp_val;
 	uint64_t                         boot_timestamp;
-	uint64_t                         prev_boot_timestamp;
 	int32_t                          active_req_cnt;
 	uint32_t                         subscribe_event;
 	atomic64_t                       state_monitor_head;
@@ -275,6 +272,7 @@ struct cam_isp_context {
 	bool                             irq_delay_detect;
 	uint64_t                         irq_timestamps;
 	uint32_t                         fps;
+	uint32_t                         bubble_frame_cnt;
 };
 
 /**

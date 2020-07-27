@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1808,17 +1808,35 @@ err:
 
 static int cam_ife_mgr_check_and_update_fe(
 	struct cam_ife_hw_mgr_ctx         *ife_ctx,
-	struct cam_isp_acquire_hw_info    *acquire_hw_info)
+	struct cam_isp_acquire_hw_info    *acquire_hw_info,
+	uint32_t                           acquire_info_size)
 {
 	int i;
 	struct cam_isp_in_port_info       *in_port = NULL;
 	uint32_t                           in_port_length = 0;
 	uint32_t                           total_in_port_length = 0;
 
+	if (acquire_hw_info->input_info_offset >=
+		acquire_hw_info->input_info_size) {
+		CAM_ERR(CAM_ISP,
+			"Invalid size offset 0x%x is greater then size 0x%x",
+			acquire_hw_info->input_info_offset,
+			acquire_hw_info->input_info_size);
+		return -EINVAL;
+	}
+
 	in_port = (struct cam_isp_in_port_info *)
 		((uint8_t *)&acquire_hw_info->data +
 		 acquire_hw_info->input_info_offset);
 	for (i = 0; i < acquire_hw_info->num_inputs; i++) {
+
+		if (((uint8_t *)in_port +
+			sizeof(struct cam_isp_in_port_info)) >
+			((uint8_t *)acquire_hw_info +
+			acquire_info_size)) {
+			CAM_ERR(CAM_ISP, "Invalid size");
+			return -EINVAL;
+		}
 
 		if ((in_port->num_out_res > CAM_IFE_HW_OUT_RES_MAX) ||
 			(in_port->num_out_res <= 0)) {
@@ -2079,7 +2097,8 @@ static int cam_ife_mgr_acquire_hw(void *hw_mgr_priv, void *acquire_hw_args)
 	acquire_hw_info =
 		(struct cam_isp_acquire_hw_info *)acquire_args->acquire_info;
 
-	rc = cam_ife_mgr_check_and_update_fe(ife_ctx, acquire_hw_info);
+	rc = cam_ife_mgr_check_and_update_fe(ife_ctx, acquire_hw_info,
+		acquire_args->acquire_info_size);
 	if (rc) {
 		CAM_ERR(CAM_ISP, "buffer size is not enough");
 		goto free_cdm;
@@ -3399,7 +3418,7 @@ static int cam_isp_blob_fps_config(
 	struct cam_ife_hw_mgr_res             *hw_mgr_res;
 	struct cam_hw_intf                    *hw_intf;
 	struct cam_vfe_fps_config_args         fps_config_args;
-	int                                    rc = -EINVAL;
+	int                                    rc = 0;
 	uint32_t                               i;
 
 	ctx = prepare->ctxt_to_hw_map;
@@ -5030,8 +5049,12 @@ static int  cam_ife_hw_mgr_find_affected_ctx(
 		 * In the call back function corresponding ISP context
 		 * will update CRM about fatal Error
 		 */
-		notify_err_cb(ife_hwr_mgr_ctx->common.cb_priv,
-			CAM_ISP_HW_EVENT_ERROR, error_event_data);
+		if (notify_err_cb)
+			notify_err_cb(ife_hwr_mgr_ctx->common.cb_priv,
+				CAM_ISP_HW_EVENT_ERROR, error_event_data);
+		else
+			CAM_DBG(CAM_ISP, "No notify error cb for ctx %d",
+				ife_hwr_mgr_ctx->ctx_index);
 	}
 
 	/* fill the affected_core in recovery data */
@@ -6107,11 +6130,27 @@ static int cam_ife_hw_mgr_handle_csid_event(
 	struct cam_isp_hw_error_event_data  error_event_data = {0};
 	struct cam_hw_event_recovery_data        recovery_data = {0};
 
+	if (!priv || !evt_data) {
+		CAM_ERR(CAM_ISP, "Invalid Parameters %pK %pK",
+			ife_hwr_mgr_ctx, evt_data);
+		return -EINVAL;
+	}
+
+	ife_hwr_mgr_ctx = (struct cam_ife_hw_mgr_ctx *)priv;
 	payload = (struct cam_csid_hw_evt_payload  *)evt_data;
 	CAM_DBG(CAM_ISP, "CSID[%d] type %d event %d",
 		payload->hw_idx, payload->evt_type,
 		evt_id);
 
+	/* We can be in this condition if due to scheduling delays
+	 * workq is late and by the time context is released
+	 */
+	if (!ife_hwr_mgr_ctx->ctx_in_use) {
+		CAM_INFO(CAM_ISP, "ctx %d not in use",
+			ife_hwr_mgr_ctx->ctx_index);
+		return 0;
+
+	}
 	switch (evt_id) {
 	case CAM_ISP_HW_EVENT_ERROR:
 		goto handle_error;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -81,6 +81,7 @@
 #define CSID_DEBUG_ENABLE_CPHY_PKT_CAPTURE        BIT(6)
 #define CSID_DEBUG_ENABLE_HBI_VBI_INFO            BIT(7)
 #define CSID_DEBUG_DISABLE_EARLY_EOF              BIT(8)
+#define CSID_DEBUG_RECOVERY_ENABLED               BIT(24)
 
 /* enum cam_csid_path_halt_mode select the path halt mode control */
 enum cam_csid_path_halt_mode {
@@ -408,6 +409,7 @@ struct cam_ife_csid_tpg_cfg  {
  * @dt:          Data type
  * @cnt:         Cid resource reference count.
  * @tpg_set:     Tpg used for this cid resource
+ * @init_cnt     cid resource init count
  *
  */
 struct cam_ife_csid_cid_data {
@@ -415,6 +417,7 @@ struct cam_ife_csid_cid_data {
 	uint32_t                     dt;
 	uint32_t                     cnt;
 	uint32_t                     tpg_set;
+	uint32_t                     init_cnt;
 };
 
 /**
@@ -422,11 +425,12 @@ struct cam_ife_csid_cid_data {
  * Later other fields can be added to this data
  * @evt_type   : Event type from CSID
  * @irq_status : IRQ Status register
- *
+ * @ctx        : pointer to ctx
  */
 struct cam_csid_hw_work_data {
 	uint32_t           evt_type;
 	uint32_t           irq_status[CSID_IRQ_STATUS_MAX];
+	void              *ctx;
 };
 
 /**
@@ -518,7 +522,8 @@ struct cam_ife_csid_path_cfg {
  * @init_frame_drop           Initial frame drop number
  * @res_sof_cnt               path resource sof count value. it used for initial
  *                            frame drop
- * @first_sof_ts              flag to mark the first sof has been registered
+ * @prev_boot_timestamp       first bootime stamp at the start
+ * @prev_qtimer_ts            stores csid timestamp
  * @ppi_hw_intf               interface to ppi hardware
  * @ppi_enabled               flag to specify if the hardware has ppi bridge
  *                            or not
@@ -563,7 +568,8 @@ struct cam_ife_csid_hw {
 	uint32_t                         dual_usage;
 	uint32_t                         init_frame_drop;
 	uint32_t                         res_sof_cnt[CAM_IFE_PIX_PATH_RES_MAX];
-	uint32_t                         first_sof_ts;
+	uint64_t                         prev_boot_timestamp;
+	uint64_t                         prev_qtimer_ts;
 	struct cam_hw_intf              *ppi_hw_intf[CAM_CSID_PPI_HW_MAX];
 	bool                             ppi_enable;
 	bool                             fatal_err_detected;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -70,14 +70,19 @@
 #define TETH_AGGR_BYTE_LIMIT 24
 #define TETH_AGGR_DL_BYTE_LIMIT 16
 #define TRE_BUFF_SIZE 32768
-#define IPA_HOLB_TMR_EN 0x1
-#define IPA_HOLB_TMR_DIS 0x0
 #define RNDIS_IPA_DFLT_RT_HDL 0
 #define IPA_POLL_FOR_EMPTINESS_NUM 50
 #define IPA_POLL_FOR_EMPTINESS_SLEEP_USEC 20
 #define IPA_CHANNEL_STOP_IN_PROC_TO_MSEC 5
 #define IPA_CHANNEL_STOP_IN_PROC_SLEEP_USEC 200
-#define IPA_MHIP_HOLB_TMO 500 /* 500ms this should be less than tag timeout */
+
+/*
+ * When IPA @ turbo, HOLB_TMO = 1 implies 128 clock cycles/usec
+ * for 1us, HOLB_TMO = 4 when IPA is at ~500Mhz
+ * for 500ms, HOLB_TMO = 2000000
+ * 500ms, this should be less than tag timeout
+ */
+#define IPA_MHIP_HOLB_TMO 2000000
 
 enum mhip_re_type {
 	MHIP_RE_XFER = 0x2,
