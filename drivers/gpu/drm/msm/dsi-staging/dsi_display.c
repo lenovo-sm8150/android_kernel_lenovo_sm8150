@@ -537,23 +537,6 @@ error:
 		display->panel->esd_config.esd_enabled = false;
 }
 
-static bool dsi_display_is_te_based_esd(struct dsi_display *display)
-{
-	u32 status_mode = 0;
-
-	if (!display->panel) {
-		pr_err("Invalid panel data\n");
-		return false;
-	}
-
-	status_mode = display->panel->esd_config.status_mode;
-
-	if (status_mode == ESD_MODE_PANEL_TE &&
-			gpio_is_valid(display->disp_te_gpio))
-		return true;
-	return false;
-}
-
 /* Allocate memory for cmd dma tx buffer */
 static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 {
