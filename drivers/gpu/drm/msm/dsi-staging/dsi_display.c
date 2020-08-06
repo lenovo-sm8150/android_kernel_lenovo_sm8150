@@ -59,6 +59,45 @@ static const struct of_device_id dsi_display_dt_match[] = {
 	{}
 };
 
+<<<<<<< HEAD
+=======
+static unsigned int timing_override;
+module_param(timing_override, uint, 0444);
+
+//ASUS BSP Display features
+#define ASUS_LCD_REGISTER_RW     "driver/panel_reg_rw"
+#define ASUS_CABC_PROC_FILE      "driver/cabc"
+#define ASUS_DIM_PROC_FILE       "driver/lcd_dimming"
+#define ASUS_DIM_CONF_PROC_FILE  "driver/lcd_dimming_conf"
+#define ASUS_ESD_PROC_FILE       "driver/esd_debug"
+#define ASUS_EARLY_ON_PROC_FILE  "driver/lcd_early_on"
+#define ASUS_BKLT_CTL_PROC_FILE  "driver/lcd_bl"
+
+#define ASUS_LCD_REG_RW_MIN_LEN  2
+#define ASUS_LCD_REG_RW_MAX_LEN  4
+#define ASUS_LCD_REG_RW_READ_MAX 20
+
+void asus_lcd_get_tcon_cmd(char cmd, int rlen);
+void asus_lcd_set_tcon_cmd(char *cmd, short len);
+
+struct dsi_display *g_display;
+static struct mutex asus_lcd_tcon_cmd_mutex;
+struct mutex dsi_op_mutex;
+char asus_lcd_reg_buffer[4095];
+
+char asus_lcd_cabc_mode[2] = {0x55, 0};
+int  asus_lcd_cabc_user_req_mode = 0;
+bool asus_lcd_cabc_locked_off = false;
+
+int asus_lcd_dimming_on = 0; //default resume with dimming
+int asus_lcd_dimming_conf = 4;
+bool asus_lcd_procfs_registered = false;
+
+extern int asus_lcd_bridge_enable;
+extern void asus_lcd_trigger_early_on_wq(void);
+//ASUS BSP Display features ---
+
+>>>>>>> 50aab65458e3... drm/msm/dsi-staging: Disable display-on backlight fading by default
 static void dsi_display_mask_ctrl_error_interrupts(struct dsi_display *display,
 			u32 mask, bool enable)
 {
