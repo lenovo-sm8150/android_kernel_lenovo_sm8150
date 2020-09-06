@@ -30,6 +30,8 @@
 
 #include "clk.h"
 
+#if defined(CONFIG_COMMON_CLK)
+
 static DEFINE_SPINLOCK(enable_lock);
 static DEFINE_MUTEX(prepare_lock);
 
@@ -43,13 +45,31 @@ static HLIST_HEAD(clk_root_list);
 static HLIST_HEAD(clk_orphan_list);
 static LIST_HEAD(clk_notifier_list);
 
+struct clk_handoff_vdd {
+	struct list_head list;
+	struct clk_vdd_class *vdd_class;
+};
+
+static LIST_HEAD(clk_handoff_vdd_list);
+static bool vdd_class_handoff_completed;
+static DEFINE_MUTEX(vdd_class_list_lock);
+/*
+ * clk_rate_change_list is used during clk_core_set_rate_nolock() calls to
+ * handle vdd_class vote tracking.  core->rate_change_node is added to
+ * clk_rate_change_list when core->new_rate requires a different voltage level
+ * (core->new_vdd_class_vote) than core->vdd_class_vote.  Elements are removed
+ * from the list after unvoting core->vdd_class_vote immediately before
+ * returning from clk_core_set_rate_nolock().
+ */
+static LIST_HEAD(clk_rate_change_list);
+
 static struct hlist_head *all_lists[] = {
 	&clk_root_list,
 	&clk_orphan_list,
 	NULL,
 };
 
-static struct hlist_head *orphan_list[] = {
+static struct hlist_head __maybe_unused *orphan_list[] = {
 	&clk_orphan_list,
 	NULL,
 };
@@ -2684,6 +2704,56 @@ static u32 debug_suspend;
 static DEFINE_MUTEX(clk_debug_lock);
 static HLIST_HEAD(clk_debug_list);
 
+static void clk_state_subtree(struct clk_core *c)
+{
+	int vdd_level = 0;
+	struct clk_core *child;
+
+	if (!c)
+		return;
+
+	if (c->vdd_class) {
+		vdd_level = clk_find_vdd_level(c, c->rate);
+		if (vdd_level < 0)
+			vdd_level = 0;
+	}
+
+	trace_clk_state(c->name, c->prepare_count, c->enable_count,
+						c->rate, vdd_level);
+
+	hlist_for_each_entry(child, &c->children, child_node)
+		clk_state_subtree(child);
+}
+
+static int clk_state_show(struct seq_file *s, void *data)
+{
+	struct clk_core *c;
+	struct hlist_head **lists = (struct hlist_head **)s->private;
+
+	clk_prepare_lock();
+
+	for (; *lists; lists++)
+		hlist_for_each_entry(c, *lists, child_node)
+			clk_state_subtree(c);
+
+	clk_prepare_unlock();
+
+	return 0;
+}
+
+
+static int clk_state_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, clk_state_show, inode->i_private);
+}
+
+static const struct file_operations clk_state_fops = {
+	.open		= clk_state_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
 static void clk_summary_show_one(struct seq_file *s, struct clk_core *c,
 				 int level)
 {
@@ -3462,6 +3532,14 @@ static inline void clk_debug_reparent(struct clk_core *core,
 static inline void clk_debug_unregister(struct clk_core *core)
 {
 }
+
+void clk_debug_print_hw(struct clk_core *clk, struct seq_file *f)
+{
+}
+
+void clock_debug_print_enabled(bool print_parent)
+{
+}
 #endif
 
 /**
@@ -4067,6 +4145,7 @@ static int clk_add_and_print_opp(struct clk_hw *hw,
 				unsigned long rate, int uv, int n)
 {
 	struct clk_core *core = hw->core;
+	unsigned long rrate;
 	int j, ret = 0;
 
 	for (j = 0; j < count; j++) {
@@ -4077,8 +4156,11 @@ static int clk_add_and_print_opp(struct clk_hw *hw,
 			return ret;
 		}
 
-		if (n == 0 || n == core->num_rate_max - 1 ||
-					rate == clk_hw_round_rate(hw, INT_MAX))
+		clk_prepare_lock();
+		rrate = clk_hw_round_rate(hw, INT_MAX);
+		clk_prepare_unlock();
+
+		if (n == 0 || n == core->num_rate_max - 1 || rate == rrate)
 			pr_info("%s: set OPP pair(%lu Hz: %u uV) on %s\n",
 						core->name, rate, uv,
 						dev_name(device_list[j]));
@@ -4133,7 +4215,9 @@ static void clk_populate_clock_opp_table(struct device_node *np,
 	}
 
 	for (n = 0; ; n++) {
+		clk_prepare_lock();
 		rrate = clk_hw_round_rate(hw, rate + 1);
+		clk_prepare_unlock();
 		if (!rrate) {
 			pr_err("clk_round_rate failed for %s\n",
 							core->name);
@@ -4421,6 +4505,8 @@ int clk_notifier_unregister(struct clk *clk, struct notifier_block *nb)
 }
 EXPORT_SYMBOL_GPL(clk_notifier_unregister);
 
+#endif /* CONFIG_COMMON_CLK */
+
 #ifdef CONFIG_OF
 /**
  * struct of_clk_provider - Clock provider registration structure
@@ -4458,6 +4544,8 @@ struct clk_hw *of_clk_hw_simple_get(struct of_phandle_args *clkspec, void *data)
 }
 EXPORT_SYMBOL_GPL(of_clk_hw_simple_get);
 
+#if defined(CONFIG_COMMON_CLK)
+
 struct clk *of_clk_src_onecell_get(struct of_phandle_args *clkspec, void *data)
 {
 	struct clk_onecell_data *clk_data = data;
@@ -4486,6 +4574,29 @@ of_clk_hw_onecell_get(struct of_phandle_args *clkspec, void *data)
 	return hw_data->hws[idx];
 }
 EXPORT_SYMBOL_GPL(of_clk_hw_onecell_get);
+
+#endif /* CONFIG_COMMON_CLK */
+
+/**
+ * of_clk_del_provider() - Remove a previously registered clock provider
+ * @np: Device node pointer associated with clock provider
+ */
+void of_clk_del_provider(struct device_node *np)
+{
+	struct of_clk_provider *cp;
+
+	mutex_lock(&of_clk_mutex);
+	list_for_each_entry(cp, &of_clk_providers, link) {
+		if (cp->node == np) {
+			list_del(&cp->link);
+			of_node_put(cp->node);
+			kfree(cp);
+			break;
+		}
+	}
+	mutex_unlock(&of_clk_mutex);
+}
+EXPORT_SYMBOL_GPL(of_clk_del_provider);
 
 /**
  * of_clk_add_provider() - Register a clock provider for a node
@@ -4587,27 +4698,6 @@ int devm_of_clk_add_hw_provider(struct device *dev,
 	return ret;
 }
 EXPORT_SYMBOL_GPL(devm_of_clk_add_hw_provider);
-
-/**
- * of_clk_del_provider() - Remove a previously registered clock provider
- * @np: Device node pointer associated with clock provider
- */
-void of_clk_del_provider(struct device_node *np)
-{
-	struct of_clk_provider *cp;
-
-	mutex_lock(&of_clk_mutex);
-	list_for_each_entry(cp, &of_clk_providers, link) {
-		if (cp->node == np) {
-			list_del(&cp->link);
-			of_node_put(cp->node);
-			kfree(cp);
-			break;
-		}
-	}
-	mutex_unlock(&of_clk_mutex);
-}
-EXPORT_SYMBOL_GPL(of_clk_del_provider);
 
 static int devm_clk_provider_match(struct device *dev, void *res, void *data)
 {
@@ -4758,8 +4848,10 @@ const char *of_clk_get_parent_name(struct device_node *np, int index)
 			else
 				clk_name = NULL;
 		} else {
+#if defined(CONFIG_COMMON_CLK)
 			clk_name = __clk_get_name(clk);
 			clk_put(clk);
+#endif
 		}
 	}
 
@@ -4789,6 +4881,8 @@ int of_clk_parent_fill(struct device_node *np, const char **parents,
 	return i;
 }
 EXPORT_SYMBOL_GPL(of_clk_parent_fill);
+
+#if defined(CONFIG_COMMON_CLK)
 
 struct clock_provider {
 	of_clk_init_cb_t clk_init_cb;
@@ -4940,4 +5034,7 @@ void __init of_clk_init(const struct of_device_id *matches)
 			force = true;
 	}
 }
+
+#endif /* CONFIG_COMMON_CLK */
+
 #endif
