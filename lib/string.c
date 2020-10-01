@@ -237,6 +237,7 @@ EXPORT_SYMBOL(strscpy);
 #endif
 
 /**
+<<<<<<< HEAD
  * strscpy_pad() - Copy a C-string into a sized buffer
  * @dest: Where to copy the string to
  * @src: Where to copy the string from
@@ -1234,3 +1235,4 @@ fail:
 
 module_init(string_selftest_init);
 #endif	/* CONFIG_STRING_SELFTEST */
+
