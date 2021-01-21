@@ -32,6 +32,7 @@
 #endif
 
 #include "goodix_ts_core.h"
+#include "../touch_gesture.h"
 #include <linux/msm_drm_notify.h>
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 38)
@@ -1274,8 +1275,19 @@ int goodix_ts_input_dev_config(struct goodix_ts_core *core_data)
 #endif
 #endif
 
-	input_set_capability(input_dev, EV_KEY, KEY_POWER);
-	input_set_capability(input_dev, EV_KEY, KEY_FINANCE);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_W);
+	input_set_capability(input_dev, EV_KEY, KEY_GESTURE_M);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_S);
+    input_set_capability(input_dev, EV_KEY, KEY_DOUBLE_TAP);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_CIRCLE);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_TWO_SWIPE);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_UP_ARROW);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_LEFT_ARROW);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_RIGHT_ARROW);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_DOWN_ARROW);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_SWIPE_DOWN);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_SWIPE_UP);
+    input_set_capability(input_dev, EV_KEY, KEY_GESTURE_SINGLE_TAP);
 
 	r = input_register_device(input_dev);
 	if (r < 0) {
