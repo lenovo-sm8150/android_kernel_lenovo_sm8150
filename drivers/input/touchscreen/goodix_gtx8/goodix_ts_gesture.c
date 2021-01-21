@@ -27,6 +27,7 @@
 #include <linux/delay.h>
 #include <asm/atomic.h>
 #include "goodix_ts_core.h"
+#include "../touch_gesture.h"
 
 #define GSX_REG_GESTURE_DATA			0x4100
 #define GSX_REG_GESTURE				0x6F68
@@ -54,6 +55,8 @@ struct gesture_module {
 	struct goodix_ext_module module;
 	struct goodix_ts_cmd cmd;
 };
+
+extern bool dsi_panel_enabled;
 
 static struct gesture_module *gsx_gesture; /*allocated in gesture init module*/
 
@@ -328,51 +331,73 @@ static int gsx_gesture_exit(struct goodix_ts_core *core_data,
 	return 0;
 }
 
-#if 0
 static void report_gesture_key(struct input_dev *dev, char keycode)
 {
-	switch (keycode) {
-	case 0x11: /* click */
-		input_report_key(dev, KEY_F7, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F7, 0);
-		input_sync(dev);
-		break;
-	case 0x22: /* double click */
-		input_report_key(dev, KEY_F6, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F6, 0);
-		input_sync(dev);
-		break;
-	case 0xaa: /* up swip */
-		input_report_key(dev, KEY_F2, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F2, 0);
-		input_sync(dev);
-		break;
-	case 0xbb: /* right swip */
-		input_report_key(dev, KEY_F5, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F5, 0);
-		input_sync(dev);
-		break;
-	case 0xab: /* down swip */
-		input_report_key(dev, KEY_F3, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F3, 0);
-		input_sync(dev);
-		break;
-	case 0xba: /* left swip */
-		input_report_key(dev, KEY_F4, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_F4, 0);
-		input_sync(dev);
-		break;
-	default:
-		break;
-	}
+    bool enabled = false;
+    int key = -1;
+    
+    ts_info("Art_Chen debug: detect %s gesture\n", keycode == DouTap ? "double tap" :
+             keycode == UpVee ? "up vee" :
+             keycode == DownVee ? "down vee" :
+             keycode == LeftVee ? "(<)" :
+             keycode == RightVee ? "(>)" :
+             keycode == Circle ? "circle" :
+             keycode == DouSwip ? "(||)" :
+             keycode == Up2DownSwip ? "up to down |" :
+             keycode == Down2UpSwip ? "down to up |" :
+             keycode == Mgestrue ? "(M)" : "unknown");
+    switch (keycode) {
+        case DouTap:
+            enabled = DouTap_enable;
+            key = KEY_DOUBLE_TAP;
+            break;
+        case UpVee:
+            enabled = UpVee_enable;
+            key = KEY_GESTURE_DOWN_ARROW;
+            break;
+        case DownVee:
+            enabled = DownVee_enable;
+            key = KEY_GESTURE_UP_ARROW;
+            break;
+        case LeftVee:
+            enabled = LeftVee_enable;
+            key = KEY_GESTURE_RIGHT_ARROW;
+            break;
+        case RightVee:
+            enabled = RightVee_enable;
+            key = KEY_GESTURE_LEFT_ARROW;
+            break;
+        case Circle:
+            enabled = Circle_enable;
+            key = KEY_GESTURE_CIRCLE;
+            break;
+        case DouSwip:
+            enabled = DouSwip_enable;
+            key = KEY_GESTURE_TWO_SWIPE;
+            break;
+        case Up2DownSwip:
+            enabled = Up2DownSwip_enable;
+            key = KEY_GESTURE_SWIPE_DOWN;
+            break;
+        case Down2UpSwip:
+            enabled = Down2UpSwip_enable;
+            key = KEY_GESTURE_SWIPE_UP;
+            break;
+        case Mgestrue:
+            enabled = Mgestrue_enable;
+            key = KEY_GESTURE_M;
+            break;
+        default:
+            break;
+    }
+    ts_info("Art_Chen debug: tp gesture keyCode %d, enabled %d                                                                                                                                                            ", key, enabled);
+    if (enabled && key != -1) {
+        input_report_key(dev, key, 1);
+        input_sync(dev);
+        input_report_key(dev, key, 0);
+        input_sync(dev);
+    }
 }
-#endif
 
 /**
  * gsx_gesture_ist - Gesture Irq handle
@@ -396,20 +421,34 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 			atomic_read(&core_data->suspended));*/
 	if (atomic_read(&core_data->suspended) == 0)
 		return EVT_CONTINUE;
-
+    
+    if (dsi_panel_enabled) {
+        if ((temp_data[0] & 0x20) == 0x20){
+            goto gesture_ist_exit;
+        }
+        return EVT_CONTINUE;
+    }
 		/* get ic gesture state*/
 	ret = ts_dev->hw_ops->read_trans(core_data->ts_dev, GSX_REG_GESTURE_DATA,
 				   temp_data, sizeof(temp_data));
 	if (ret < 0 || ((temp_data[0] & 0x20)  == 0)) {
 		ts_debug("Read gesture data faild, ret=%d, temp_data[0]=0x%x", ret, temp_data[0]);
-		goto re_send_ges_cmd;
+        if (dsi_panel_enabled) {
+            return EVT_CONTINUE;
+        } else {
+            goto re_send_ges_cmd;
+        }
 	}
 
 	checksum = checksum_u8(temp_data, sizeof(temp_data));
 	if (checksum != 0) {
 		ts_err("Gesture data checksum error:0x%x", checksum);
 		ts_info("Gesture data %*ph", (int)sizeof(temp_data), temp_data);
-		goto re_send_ges_cmd;
+        if (dsi_panel_enabled) {
+            return EVT_CONTINUE;
+        } else {
+            goto re_send_ges_cmd;
+        }
 	}
 
 	ts_debug("Gesture data:");
@@ -421,13 +460,9 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	write_unlock(&gsx_gesture->rwlock);
 
 	if (QUERYBIT(gsx_gesture->gesture_type, temp_data[2])) {
-		/* do resume routine */
-		ts_info("Gesture match success, resume IC");
-		input_report_key(core_data->input_dev, KEY_FINANCE, 1);
-		input_sync(core_data->input_dev);
-		input_report_key(core_data->input_dev, KEY_FINANCE, 0);
-		input_sync(core_data->input_dev);
-		goto gesture_ist_exit;
+        report_gesture_key(core_data->input_dev, temp_data[2]);
+        goto gesture_ist_exit_without_wakeup;
+
 	} else {
 		ts_info("Unsupported gesture:%x", temp_data[2]);
 	}
@@ -439,6 +474,13 @@ gesture_ist_exit:
 	ts_dev->hw_ops->write_trans(core_data->ts_dev, GSX_REG_GESTURE_DATA,
 			      &clear_reg, 1);
 	return EVT_CANCEL_IRQEVT;
+gesture_ist_exit_without_wakeup:
+    ts_info("Do not wakeup system");
+    ts_dev->hw_ops->write_trans(core_data->ts_dev, GSX_REG_GESTURE_DATA,
+                                &clear_reg, 1);
+    ts_dev->hw_ops->send_cmd(core_data->ts_dev, gesture_cmd);
+    enable_irq_wake(core_data->irq);
+    return EVT_CANCEL_RESUME;
 }
 
 /**
@@ -522,6 +564,7 @@ static int __init goodix_gsx_gesture_init(void)
 	gsx_gesture->kobj_initialized = 0;
 	atomic_set(&gsx_gesture->registered, 0);
 	rwlock_init(&gsx_gesture->rwlock);
+    gsx_gesture_en(1); // Enable all gesture by default.
 	/* result = goodix_register_ext_module(&(gsx_gesture->module));
 	if (result == 0)
 		atomic_set(&gsx_gesture->registered, 1);
