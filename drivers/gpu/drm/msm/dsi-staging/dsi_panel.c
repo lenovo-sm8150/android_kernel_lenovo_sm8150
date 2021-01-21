@@ -51,6 +51,8 @@ enum dsi_dsc_ratio_type {
 	DSC_RATIO_TYPE_MAX
 };
 
+bool dsi_panel_enabled;
+
 static u32 dsi_dsc_rc_buf_thresh[] = {0x0e, 0x1c, 0x2a, 0x38, 0x46, 0x54,
 		0x62, 0x69, 0x70, 0x77, 0x79, 0x7b, 0x7d, 0x7e};
 
@@ -4438,6 +4440,7 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	else
 		panel->panel_initialized = true;
 	mutex_unlock(&panel->panel_lock);
+    dsi_panel_enabled = panel->panel_initialized;
 	return rc;
 }
 
@@ -4532,6 +4535,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 		}
 	}
 	panel->panel_initialized = false;
+    dsi_panel_enabled = panel->panel_initialized;
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 
 	mutex_unlock(&panel->panel_lock);
