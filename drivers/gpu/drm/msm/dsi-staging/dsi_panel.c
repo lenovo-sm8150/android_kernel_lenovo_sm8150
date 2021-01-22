@@ -890,23 +890,22 @@ u32 dsi_panel_get_fod_dim_alpha(struct dsi_panel *panel)
 			panel->fod_dim_lut[i - 1].alpha, panel->fod_dim_lut[i].alpha);
 }
 
+#ifdef CONFIG_BRIGHTNESS_HBM
+extern int dsi_panel_on_hbm;
+#endif
 int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 {
 	int rc = 0;
+    int bl_lvl;
 
 	if (status) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
-					panel->name, rc);
-	} else if (panel->doze_enabled) {
-		dsi_panel_update_doze(panel);
-	} else {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
-					panel->name, rc);
+        bl_lvl = 1;
+        dsi_panel_on_hbm = 1;
+    } else {
+        bl_lvl = 0
+        dsi_panel_on_hbm = 0;
 	}
+    rc = dsi_panel_set_backlight_hbm(panel, bl_lvl);
 
 	return rc;
 }
@@ -2611,24 +2610,6 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		pr_debug("set default brightness to max level\n");
 	} else {
 		panel->bl_config.brightness_default_level = val;
-	}
-
-	rc = utils->read_u32(utils->data,
-			"qcom,disp-doze-lpm-backlight", &val);
-	if (rc) {
-		panel->bl_config.bl_doze_lpm = 0;
-		pr_debug("set doze lpm backlight to 0\n");
-	} else {
-		panel->bl_config.bl_doze_lpm = val;
-	}
-
-	rc = utils->read_u32(utils->data,
-			"qcom,disp-doze-hbm-backlight", &val);
-	if (rc) {
-		panel->bl_config.bl_doze_hbm = 0;
-		pr_debug("set doze hbm backlight to 0\n");
-	} else {
-		panel->bl_config.bl_doze_hbm = val;
 	}
 
 	rc = dsi_panel_parse_fod_dim_lut(panel, utils);
@@ -4544,9 +4525,6 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 	return rc;
 }
 
-#ifdef CONFIG_BRIGHTNESS_HBM
-extern int dsi_panel_on_hbm;
-#endif
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
