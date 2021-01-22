@@ -902,7 +902,7 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
         bl_lvl = 1;
         dsi_panel_on_hbm = 1;
     } else {
-        bl_lvl = 0
+        bl_lvl = 0;
         dsi_panel_on_hbm = 0;
 	}
     rc = dsi_panel_set_backlight_hbm(panel, bl_lvl);
