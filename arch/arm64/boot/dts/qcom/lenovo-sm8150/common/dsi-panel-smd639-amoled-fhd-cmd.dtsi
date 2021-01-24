@@ -28,29 +28,30 @@
 			17000 15500 30000 8000 3000>;
 		qcom,mdss-dsi-panel-peak-brightness = <4200000>;
 		qcom,mdss-dsi-panel-blackness-level = <3230>;
-
-      qcom,disp-fod-dim-lut = <
+		qcom,disp-doze-lpm-backlight = <20>;
+		qcom,disp-doze-hbm-backlight = <266>;
+		qcom,disp-fod-dim-lut = <
       			/* brightness, alpha */
-               0	0xff
-               1	0xee
-               2	0xe8
-               3	0xe6
-               4	0xe5
-               6	0xe4
-               10	0xe0
-               20	0xd5
-               30	0xce
-               45	0xc6
-               70	0xb7
-               100	0xad
-               150	0xa0
-               227	0x8a
-               300	0x80
-               400	0x6e
-               500	0x5b
-               600	0x50
-               800	0x38
-               1023	0x18
+			0	0xff
+			1	0xee
+			2	0xe8
+			3	0xe6
+			4	0xe5
+			6	0xe4
+			10	0xe0
+			20	0xd5
+			30	0xce
+			45	0xc6
+			70	0xb7
+			100	0xad
+			150	0xa0
+			227	0x8a
+			300	0x80
+			400	0x6e
+			500	0x5b
+			600	0x50
+			800	0x38
+			1023	0x18
       		>;
 
 		qcom,mdss-dsi-lane-map = "lane_map_0123";
@@ -119,6 +120,8 @@
 					05 01 00 00 78 00 01 10];	/* enter sleep mode */
 				qcom,mdss-dsi-hbm-on-command = [
 					15 01 00 00 00 00 02 53 E0];
+				qcom,mdss-dsi-hbm-off-command = [
+					15 01 00 00 00 00 02 53 20];
 				qcom,mdss-dsi-hbm-dim-off-command = [
 					39 00 00 00 00 00 03 F0 5A 5A
 					39 00 00 00 00 00 03 B7 01 5B
@@ -127,7 +130,48 @@
 					39 00 00 00 00 00 03 F0 A5 A5];
 				qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-off-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-hbm-off-command-state = "dsi_hs_mode";
+				qcom,mdss-dsi-hbm-on-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-hbm-dim-off-command-state = "dsi_lp_mode";
+
 				qcom,mdss-dsi-force-tx-mode = "dsi_hs_mode";
+				
+				qcom,mdss-dsi-doze-hbm-command = [
+					39 00 00 00 00 00 03 F0 5A 5A
+					39 00 00 00 00 00 02 D4 8B
+					39 00 00 00 00 00 02 B0 A5
+					39 00 00 00 00 00 02 C7 00
+					39 00 00 00 00 00 02 B0 69
+					39 00 00 00 00 00 03 B9 08 8F
+					39 01 00 00 01 00 02 53 E0
+					39 01 00 00 00 00 03 F0 A5 A5];
+				qcom,mdss-dsi-doze-lbm-command = [
+					39 00 00 00 00 00 03 F0 5A 5A
+					39 00 00 00 00 00 02 D4 8B
+					39 00 00 00 00 00 02 B0 A5
+					39 00 00 00 00 00 02 C7 00
+					39 00 00 00 00 00 02 B0 69
+					39 00 00 00 00 00 03 B9 08 8F
+					39 01 00 00 00 00 02 53 23
+					39 01 00 00 00 00 03 F0 A5 A5];
+				qcom,mdss-dsi-nolp-command = [
+					05 01 00 00 10 00 02 28 00
+					39 01 00 00 00 00 02 53 20
+					05 01 00 00 00 00 02 29 00];
+				qcom,mdss-dsi-doze-hbm-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-doze-lbm-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-nolp-command-state = "dsi_lp_mode";
+				
+				qcom,mdss-dsi-hbm-fod-off-command = [
+					15 01 00 00 10 00 02 53 20];
+				qcom,mdss-dsi-hbm-fod-off-command-state = "dsi_hs_mode";
+				qcom,mdss-dsi-hbm-fod-on-command = [
+					39 00 00 00 00 00 03 F0 5A 5A
+					15 00 00 00 00 00 02 B0 03
+					15 00 00 00 00 00 02 B7 C9
+					39 00 00 00 00 00 03 F0 A5 A5
+					15 01 00 00 10 00 02 53 E0];
+				qcom,mdss-dsi-hbm-fod-on-command-state = "dsi_lp_mode";
 			};
 		};
 
