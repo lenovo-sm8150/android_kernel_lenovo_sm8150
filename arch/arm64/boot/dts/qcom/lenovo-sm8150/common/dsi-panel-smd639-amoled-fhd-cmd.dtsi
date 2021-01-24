@@ -31,26 +31,26 @@
 
       qcom,disp-fod-dim-lut = <
       			/* brightness, alpha */
-               0   0xff
-               1   0xee
-               2   0xe8
-               3   0xe6
-               4   0xe5
-               6   0xe4
-               10   0xe0
-               20   0xd5
-               30   0xce
-               45   0xc6
-               70   0xb7
-               100   0xad
-               150   0xa0
-               227   0x8a
-               300   0x80
-               400   0x6e
-               500   0x5b
-               600   0x50
-               800   0x38
-               1023   0x18
+               0	0xff
+               1	0xee
+               2	0xe8
+               3	0xe6
+               4	0xe5
+               6	0xe4
+               10	0xe0
+               20	0xd5
+               30	0xce
+               45	0xc6
+               70	0xb7
+               100	0xad
+               150	0xa0
+               227	0x8a
+               300	0x80
+               400	0x6e
+               500	0x5b
+               600	0x50
+               800	0x38
+               1023	0x18
       		>;
 
 		qcom,mdss-dsi-lane-map = "lane_map_0123";
