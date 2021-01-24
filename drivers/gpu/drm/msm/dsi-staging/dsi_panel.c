@@ -948,6 +948,7 @@ int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mod
 int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 {
 	int rc = 0;
+	pr_err("dsi_panel_set_fod_hbm %d", status);
 
 	if (status) {
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_ON);
@@ -2035,13 +2036,15 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-off-commands",
 	"qcom,mdss-dsi-doze-hbm-command",
 	"qcom,mdss-dsi-doze-lbm-command",
-	"qcom,mdss-dsi-dispparam-hbm-fod-on-command",
-	"qcom,mdss-dsi-dispparam-hbm-fod-off-command",
+	"qcom,mdss-dsi-hbm-fod-on-command",
+	"qcom,mdss-dsi-hbm-fod-off-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-pre-on-command-state",
 	"qcom,mdss-dsi-on-command-state",
+	"qcom,mdss-dsi-hbm-on-command-state",
+	"qcom,mdss-dsi-hbm-dim-off-command-state",
 	"qcom,mdss-dsi-post-on-command-state",
 	"qcom,mdss-dsi-pre-off-command-state",
 	"qcom,mdss-dsi-off-command-state",
@@ -2065,8 +2068,8 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-off-commands-state",
 	"qcom,mdss-dsi-doze-hbm-command-state",
 	"qcom,mdss-dsi-doze-lbm-command-state",
-	"qcom,mdss-dsi-dispparam-hbm-fod-on-command-state",
-	"qcom,mdss-dsi-dispparam-hbm-fod-off-command-state",
+	"qcom,mdss-dsi-hbm-fod-on-command-state",
+	"qcom,mdss-dsi-hbm-fod-off-command-state",
 };
 
 static int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
