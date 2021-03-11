@@ -170,6 +170,9 @@ static ssize_t store_sockfd(struct device *dev, struct device_attribute *attr,
 
 		spin_lock_irqsave(&udc->lock, flags);
 		spin_lock_irq(&udc->ud.lock);
+		udc->ud.tcp_socket = socket;
+		udc->ud.tcp_rx = tcp_rx;
+		udc->ud.tcp_tx = tcp_tx;
 		udc->ud.status = SDEV_ST_USED;
 		spin_unlock_irq(&udc->ud.lock);
 
