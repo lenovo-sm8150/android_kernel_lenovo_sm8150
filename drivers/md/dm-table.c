@@ -1692,6 +1692,16 @@ static int queue_supports_sg_merge(struct dm_target *ti, struct dm_dev *dev,
 	return q && !test_bit(QUEUE_FLAG_NO_SG_MERGE, &q->queue_flags);
 }
 
+static int queue_supports_inline_encryption(struct dm_target *ti,
+					    struct dm_dev *dev,
+					    sector_t start, sector_t len,
+					    void *data)
+{
+	struct request_queue *q = bdev_get_queue(dev->bdev);
+
+	return q && blk_queue_inlinecrypt(q);
+}
+
 static bool dm_table_all_devices_attribute(struct dm_table *t,
 					   iterate_devices_callout_fn func)
 {
