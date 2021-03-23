@@ -5375,6 +5375,28 @@ static ssize_t sysfs_dimlayer_bl_write(struct device *dev,
     is_dimlayer_bl_enable = enabled > 0;
     return count;
 }
+int dimlayer_hbm_is_single_layer = 0;
+int chen_need_active_hbm_next_frame = 0;
+static ssize_t sysfs_dimlayer_hbm_is_single_layer_read(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    return snprintf(buf, PAGE_SIZE, "%d\n", dimlayer_hbm_is_single_layer);
+}
+
+static ssize_t sysfs_chen_need_active_hbm_next_frame_read(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    return snprintf(buf, PAGE_SIZE, "%d\n", chen_need_active_hbm_next_frame);
+}
+
+static ssize_t sysfs_chen_need_active_hbm_next_frame_write(struct device *dev,
+	struct device_attribute *attr, char *buf, size_t count)
+{
+    int enabled = 0;
+    sscanf(buf, "%d", &enabled);
+    chen_need_active_hbm_next_frame = enabled > 0 ? 1 : 0;
+    return count;
+}
 
 bool is_dimlayer_hbm_enabled;
 static ssize_t sysfs_dimlayer_hbm_read(struct device *dev,
@@ -5450,6 +5472,14 @@ static DEVICE_ATTR(fod_hbm_en, 0664,
 			sysfs_fod_hbm_en_read,
 			sysfs_fod_hbm_en_write);
 
+static DEVICE_ATTR(chen_need_active_hbm_next_frame, 0664,
+			sysfs_chen_need_active_hbm_next_frame_read,
+			sysfs_chen_need_active_hbm_next_frame_write);
+
+static DEVICE_ATTR(dimlayer_hbm_is_single_layer, 0444,
+			sysfs_dimlayer_hbm_is_single_layer_read,
+			NULL);
+
 static struct attribute *display_fs_attrs[] = {
 	&dev_attr_doze_status.attr,
 	&dev_attr_doze_mode.attr,
@@ -5457,6 +5487,8 @@ static struct attribute *display_fs_attrs[] = {
 	&dev_attr_dimlayer_bl.attr,
 	&dev_attr_dimlayer_hbm.attr,
 	&dev_attr_fod_hbm_en.attr,
+	&dev_attr_chen_need_active_hbm_next_frame.attr,
+	&dev_attr_dimlayer_hbm_is_single_layer.attr,
 	NULL,
 };
 static struct attribute_group display_fs_attrs_group = {
