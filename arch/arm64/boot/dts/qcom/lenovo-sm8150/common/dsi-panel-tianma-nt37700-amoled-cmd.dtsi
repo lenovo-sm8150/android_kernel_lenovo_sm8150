@@ -23,6 +23,60 @@
 
 		qcom,mdss-dsi-underflow-color = <0xff>;
 		qcom,mdss-dsi-border-color = <0>;
+		qcom,disp-doze-lpm-backlight = <20>;
+		qcom,disp-doze-hbm-backlight = <266>;
+		qcom,disp-dc-dimlayer-backlight = <260>;
+		qcom,disp-fod-dim-lut = <
+      			/* brightness, alpha */
+			0	0xff
+			1	0xee
+			2	0xe8
+			3	0xe6
+			4	0xe5
+			6	0xe4
+			10	0xe0
+			20	0xd5
+			30	0xce
+			45	0xc6
+			70	0xb7
+			100	0xad
+			150	0xa0
+			227	0x8a
+			300	0x80
+			400	0x6e
+			500	0x5b
+			600	0x50
+			800	0x38
+			1023	0x18
+      		>;
+		
+		qcom,disp-bl-dim-lut = <
+      			/* brightness, alpha */
+			0	0xff
+			1	0xE0
+			2	0xd6
+			3	0xd5
+			4	0xcf
+			5	0xcb
+			6	0xc9
+			8	0xc5
+			10	0xc1
+			15	0xb6
+			20	0xac
+			30	0x9d
+			45	0x82
+			70	0x6c
+			100	0x56
+			120	0x47
+			140	0x3a
+			160	0x2f
+			180	0x22
+			200	0x16
+			220	0xe
+			240	0x6
+			260	0x00
+      		>;
+
 		qcom,mdss-dsi-lane-map = "lane_map_0123";
 		qcom,mdss-dsi-traffic-mode = "burst_mode";
 		qcom,mdss-dsi-bllp-eof-power-mode;
@@ -132,7 +186,20 @@
 					39 01 00 00 00 00 1F B4 98 77 55 44 33 33 33 33 33 33 30 52 35 03 E6 E6 C9 C9 AC AC AC AC AC AC AC AC AC AC AC 84];
 				qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-off-command-state = "dsi_lp_mode";
+				qcom,mdss-dsi-hbm-off-command-state = "dsi_hs_mode";
+				qcom,mdss-dsi-hbm-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-force-tx-mode = "dsi_hs_mode";
+				
+				qcom,mdss-dsi-hbm-fod-off-command = [
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					39 01 00 00 00 00 1F B4 98 77 55 44 33 33 33 33 33 33 30 52 35 03 E6 E6 C9 C9 AC AC AC AC AC AC AC AC AC AC AC 84];
+				qcom,mdss-dsi-hbm-fod-off-command-state = "dsi_hs_mode";
+				qcom,mdss-dsi-hbm-fod-on-command = [
+					15 01 00 00 00 00 02 53 20
+					39 01 00 00 00 00 06 F0 55 AA 52 08 00
+					39 01 00 00 00 00 1F B4 00 00 00 00 00 00 00 00 00 00 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47 47
+					39 01 00 00 00 00 03 51 0F FF];
+				qcom,mdss-dsi-hbm-fod-on-command-state = "dsi_lp_mode";
 			};
 		};
 	};
