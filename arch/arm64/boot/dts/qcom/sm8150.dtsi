@@ -564,7 +564,7 @@
 	};
 
 	chosen {
-		bootargs = "quiet rcu_nocbs=0-7 cgroup.memory=nokmem,nosocket noirqdebug";
+		bootargs = "quiet nodebugmon rcu_nocbs=0-7 cgroup.memory=nokmem,nosocket noirqdebug";
 	};
 
 	soc: soc { };
