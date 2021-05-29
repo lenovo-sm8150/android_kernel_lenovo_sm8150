@@ -568,17 +568,6 @@ void mddev_init(struct mddev *mddev)
 }
 EXPORT_SYMBOL_GPL(mddev_init);
 
-static struct mddev *mddev_find_locked(dev_t unit)
-{
-	struct mddev *mddev;
-
-	list_for_each_entry(mddev, &all_mddevs, all_mddevs)
-		if (mddev->unit == unit)
-			return mddev;
-
-	return NULL;
-}
-
 static struct mddev *mddev_find(dev_t unit)
 {
 	struct mddev *mddev;
@@ -606,13 +595,13 @@ static struct mddev *mddev_find_or_alloc(dev_t unit)
 	spin_lock(&all_mddevs_lock);
 
 	if (unit) {
-		mddev = mddev_find_locked(unit);
-		if (mddev) {
-			mddev_get(mddev);
-			spin_unlock(&all_mddevs_lock);
-			kfree(new);
-			return mddev;
-		}
+		list_for_each_entry(mddev, &all_mddevs, all_mddevs)
+			if (mddev->unit == unit) {
+				mddev_get(mddev);
+				spin_unlock(&all_mddevs_lock);
+				kfree(new);
+				return mddev;
+			}
 
 		if (new) {
 			list_add(&new->all_mddevs, &all_mddevs);
@@ -638,7 +627,12 @@ static struct mddev *mddev_find_or_alloc(dev_t unit)
 				return NULL;
 			}
 
-			is_free = !mddev_find_locked(dev);
+			is_free = 1;
+			list_for_each_entry(mddev, &all_mddevs, all_mddevs)
+				if (mddev->unit == dev) {
+					is_free = 0;
+					break;
+				}
 		}
 		new->unit = dev;
 		new->md_minor = MINOR(dev);
