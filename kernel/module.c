@@ -502,7 +502,6 @@ struct find_symbol_arg {
 	struct module *owner;
 	const s32 *crc;
 	const struct kernel_symbol *sym;
-	enum mod_license license;
 };
 
 static bool check_symbol(const struct symsearch *syms,
@@ -536,7 +535,6 @@ static bool check_symbol(const struct symsearch *syms,
 	fsa->owner = owner;
 	fsa->crc = symversion(syms->crcs, symnum);
 	fsa->sym = &syms->start[symnum];
-	fsa->license = syms->license;
 	return true;
 }
 
@@ -569,7 +567,6 @@ static bool find_symbol_in_section(const struct symsearch *syms,
 static const struct kernel_symbol *find_symbol(const char *name,
 					struct module **owner,
 					const s32 **crc,
-					enum mod_license *license,
 					bool gplok,
 					bool warn)
 {
@@ -584,8 +581,6 @@ static const struct kernel_symbol *find_symbol(const char *name,
 			*owner = fsa.owner;
 		if (crc)
 			*crc = fsa.crc;
-		if (license)
-			*license = fsa.license;
 		return fsa.sym;
 	}
 
@@ -1060,7 +1055,7 @@ void __symbol_put(const char *symbol)
 	struct module *owner;
 
 	preempt_disable();
-	if (!find_symbol(symbol, &owner, NULL, NULL, true, false))
+	if (!find_symbol(symbol, &owner, NULL, true, false))
 		BUG();
 	module_put(owner);
 	preempt_enable();
@@ -1339,7 +1334,7 @@ static inline int check_modstruct_version(const struct load_info *info,
 	 */
 	preempt_disable();
 	if (!find_symbol(VMLINUX_SYMBOL_STR(module_layout), NULL,
-			 &crc, NULL, true, false)) {
+			 &crc, true, false)) {
 		preempt_enable();
 		BUG();
 	}
@@ -1389,7 +1384,6 @@ static const struct kernel_symbol *resolve_symbol(struct module *mod,
 	struct module *owner;
 	const struct kernel_symbol *sym;
 	const s32 *crc;
-	enum mod_license license;
 	int err;
 
 	/*
@@ -1399,7 +1393,7 @@ static const struct kernel_symbol *resolve_symbol(struct module *mod,
 	 */
 	sched_annotate_sleep();
 	mutex_lock(&module_mutex);
-	sym = find_symbol(name, &owner, &crc, &license,
+	sym = find_symbol(name, &owner, &crc,
 			  !(mod->taints & (1 << TAINT_PROPRIETARY_MODULE)), true);
 	if (!sym)
 		goto unlock;
@@ -2214,7 +2208,7 @@ void *__symbol_get(const char *symbol)
 	const struct kernel_symbol *sym;
 
 	preempt_disable();
-	sym = find_symbol(symbol, &owner, NULL, NULL, true, true);
+	sym = find_symbol(symbol, &owner, NULL, true, true);
 	if (sym && strong_try_module_get(owner))
 		sym = NULL;
 	preempt_enable();
@@ -2249,7 +2243,7 @@ static int verify_export_symbols(struct module *mod)
 
 	for (i = 0; i < ARRAY_SIZE(arr); i++) {
 		for (s = arr[i].sym; s < arr[i].sym + arr[i].num; s++) {
-			if (find_symbol(s->name, &owner, NULL, NULL, true, false)) {
+			if (find_symbol(s->name, &owner, NULL, true, false)) {
 				pr_err("%s: exports duplicate symbol %s"
 				       " (owned by %s)\n",
 				       mod->name, s->name, module_name(owner));
