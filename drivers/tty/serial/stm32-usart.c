@@ -365,10 +365,7 @@ static unsigned int stm32_tx_empty(struct uart_port *port)
 	struct stm32_port *stm32_port = to_stm32_port(port);
 	struct stm32_usart_offsets *ofs = &stm32_port->info->ofs;
 
-	if (readl_relaxed(port->membase + ofs->isr) & USART_SR_TC)
-		return TIOCSER_TEMT;
-
-	return 0;
+	return readl_relaxed(port->membase + ofs->isr) & USART_SR_TXE;
 }
 
 static void stm32_set_mctrl(struct uart_port *port, unsigned int mctrl)
