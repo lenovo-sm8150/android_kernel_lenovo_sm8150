@@ -471,10 +471,8 @@ struct wl3501_md_req {
 	u16	size;
 	u8	pri;
 	u8	service_class;
-	struct {
-		u8	daddr[ETH_ALEN];
-		u8	saddr[ETH_ALEN];
-	} addr;
+	u8	daddr[ETH_ALEN];
+	u8	saddr[ETH_ALEN];
 };
 
 struct wl3501_md_ind {
@@ -486,10 +484,8 @@ struct wl3501_md_ind {
 	u8	reception;
 	u8	pri;
 	u8	service_class;
-	struct {
-		u8	daddr[ETH_ALEN];
-		u8	saddr[ETH_ALEN];
-	} addr;
+	u8	daddr[ETH_ALEN];
+	u8	saddr[ETH_ALEN];
 };
 
 struct wl3501_md_confirm {
