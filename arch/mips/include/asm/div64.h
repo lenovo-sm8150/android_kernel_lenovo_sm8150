@@ -68,11 +68,9 @@
 									\
 	__high = __div >> 32;						\
 	__low = __div;							\
+	__upper = __high;						\
 									\
-	if (__high < __radix) {						\
-		__upper = __high;					\
-		__high = 0;						\
-	} else {							\
+	if (__high) {							\
 		__asm__("divu	$0, %z1, %z2"				\
 		: "=x" (__modquot)					\
 		: "Jr" (__high), "Jr" (__radix));			\
