@@ -58,6 +58,7 @@
 
 #define __div64_32(n, base) ({						\
 	unsigned long __upper, __low, __high, __radix;			\
+	unsigned long long __modquot;					\
 	unsigned long long __quot;					\
 	unsigned long long __div;					\
 	unsigned long __mod;						\
@@ -72,8 +73,11 @@
 		__upper = __high;					\
 		__high = 0;						\
 	} else {							\
-		__upper = __high % __radix;				\
-		__high /= __radix;					\
+		__asm__("divu	$0, %z1, %z2"				\
+		: "=x" (__modquot)					\
+		: "Jr" (__high), "Jr" (__radix));			\
+		__upper = __modquot >> 32;				\
+		__high = __modquot;					\
 	}								\
 									\
 	__mod = do_div64_32(__low, __upper, __low, __radix);		\
