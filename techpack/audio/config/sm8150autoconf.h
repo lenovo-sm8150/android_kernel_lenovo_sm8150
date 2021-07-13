@@ -52,3 +52,9 @@
 #define CONFIG_SND_SOC_MSM_HDMI_CODEC_RX 1
 #define CONFIG_VOICE_MHI 1
 
+#ifdef CONFIG_PRODUCT_HEART
+#include "lenovo/heartconf.h"
+#endif
+#ifdef CONFIG_PRODUCT_ZIPPO
+#include "lenovo/zippoconf.h"
+#endif
