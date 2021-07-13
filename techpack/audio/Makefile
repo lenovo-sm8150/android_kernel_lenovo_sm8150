@@ -31,6 +31,14 @@ ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 include $(srctree)/techpack/audio/config/sm8150auto.conf
 export $(shell sed 's/=.*//' $(srctree)/techpack/audio/config/sm8150auto.conf)
 endif
+ifeq ($(CONFIG_PRODUCT_HEART), y)
+include $(srctree)/techpack/audio/config/lenovo/heart.conf
+export $(shell sed 's/=.*//' $(srctree)/techpack/audio/config/lenovo/heart.conf)
+endif
+ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+include $(srctree)/techpack/audio/config/lenovo/zippo.conf
+export $(shell sed 's/=.*//' $(srctree)/techpack/audio/config/lenovo/zippo.conf)
+endif
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
 USERINCLUDE     += \
@@ -73,6 +81,14 @@ endif
 ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 LINUXINCLUDE    += \
                 -include $(srctree)/techpack/audio/config/sm8150autoconf.h
+endif
+ifeq ($(CONFIG_PRODUCT_HEART), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/lenovo/heartconf.h
+endif
+ifeq ($(CONFIG_PRODUCT_ZIPPO), y)
+LINUXINCLUDE    += \
+                -include $(srctree)/techpack/audio/config/lenovo/zippoconf.h
 endif
 
 obj-y += soc/
