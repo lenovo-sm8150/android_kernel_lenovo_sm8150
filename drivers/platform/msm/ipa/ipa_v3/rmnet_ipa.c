@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2899,8 +2899,9 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 	if (ipa3_rmnet_res.ipa_napi_enable)
 		netif_napi_del(&(rmnet_ipa3_ctx->wwan_priv->napi));
 	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
-	IPAWANINFO("rmnet_ipa unregister_netdev\n");
+	IPAWANDBG("rmnet_ipa unregister_netdev started\n");
 	unregister_netdev(IPA_NETDEV());
+	IPAWANDBG("rmnet_ipa unregister_netdev completed\n");
 	if (ipa3_ctx->use_ipa_pm)
 		ipa3_wwan_deregister_netdev_pm_client();
 	else
@@ -3121,13 +3122,13 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		break;
 	case SUBSYS_AFTER_SHUTDOWN:
 		IPAWANINFO("IPA Received MPSS AFTER_SHUTDOWN\n");
+		ipa3_set_modem_up(false);
 		if (atomic_read(&rmnet_ipa3_ctx->is_ssr) &&
 			ipa3_ctx->ipa_hw_type < IPA_HW_v4_0)
 			ipa3_q6_post_shutdown_cleanup();
 
 		if (ipa3_ctx->ipa_endp_delay_wa)
 			ipa3_client_prod_post_shutdown_cleanup();
-
 		IPAWANINFO("IPA AFTER_SHUTDOWN handling is complete\n");
 		break;
 	case SUBSYS_BEFORE_POWERUP:
@@ -3139,11 +3140,15 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 		}
 		/* hold a proxy vote for the modem. */
 		ipa3_proxy_clk_vote();
+		if (ipa3_ctx->ipa_config_is_mhi)
+			ipa3_set_reset_client_cons_pipe_sus_holb(false,
+					IPA_CLIENT_MHI_CONS);
 		ipa3_reset_freeze_vote();
 		IPAWANINFO("IPA BEFORE_POWERUP handling is complete\n");
 		break;
 	case SUBSYS_AFTER_POWERUP:
 		IPAWANINFO("IPA received MPSS AFTER_POWERUP\n");
+		ipa3_set_modem_up(true);
 		if (!atomic_read(&rmnet_ipa3_ctx->is_initialized) &&
 		       atomic_read(&rmnet_ipa3_ctx->is_ssr))
 			platform_driver_register(&rmnet_ipa_driver);

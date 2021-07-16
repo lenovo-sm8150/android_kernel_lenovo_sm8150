@@ -1622,8 +1622,8 @@ struct dentry *__d_alloc(struct super_block *sb, const struct qstr *name)
 	} else if (name->len > DNAME_INLINE_LEN-1) {
 		size_t size = offsetof(struct external_name, name[1]);
 		struct external_name *p = kmalloc(size + name->len,
-						  GFP_KERNEL_ACCOUNT |
-						  __GFP_RECLAIMABLE);
+						GFP_KERNEL_ACCOUNT |
+						__GFP_RECLAIMABLE);
 		if (!p) {
 			kmem_cache_free(dentry_cache, dentry); 
 			return NULL;
