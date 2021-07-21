@@ -2024,7 +2024,8 @@ static int f2fs_quota_on(struct super_block *sb, int type, int format_id,
 
 	/* if quota sysfile exists, deny enabling quota with specific file */
 	if (f2fs_sb_has_quota_ino(F2FS_SB(sb))) {
-		f2fs_err(F2FS_SB(sb), "quota sysfile already exists");
+		f2fs_msg(F2FS_SB(sb), KERN_ERR,
+					"quota sysfile already exists");
 		return -EBUSY;
 	}
 
