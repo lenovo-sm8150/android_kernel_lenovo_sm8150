@@ -531,7 +531,7 @@ static ssize_t tfa98xx_dbgfs_start_set(struct file *file,
 	struct i2c_client *i2c = file->private_data;
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
 	enum tfa_error ret;
-	char buf[32];
+	char buf[32] = "";
 	const char ref[] = "please calibrate now";
 	int buf_size;
 
@@ -681,7 +681,7 @@ static ssize_t tfa98xx_dbgfs_dsp_state_set(struct file *file,
 	struct i2c_client *i2c = file->private_data;
 	struct tfa98xx *tfa98xx = i2c_get_clientdata(i2c);
 	enum Tfa98xx_Error ret;
-	char buf[32];
+	char buf[32] = "";
 	const char start_cmd[] = "start";
 	const char stop_cmd[] = "stop";
 	const char mon_start_cmd[] = "monitor start";
