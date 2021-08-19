@@ -5368,7 +5368,7 @@ static ssize_t sysfs_dimlayer_bl_read(struct device *dev,
 }
 
 static ssize_t sysfs_dimlayer_bl_write(struct device *dev,
-	struct device_attribute *attr, char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
     int enabled = 0;
     sscanf(buf, "%d", &enabled);
@@ -5390,7 +5390,7 @@ static ssize_t sysfs_chen_need_active_hbm_next_frame_read(struct device *dev,
 }
 
 static ssize_t sysfs_chen_need_active_hbm_next_frame_write(struct device *dev,
-	struct device_attribute *attr, char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
     int enabled = 0;
     sscanf(buf, "%d", &enabled);
@@ -5406,7 +5406,7 @@ static ssize_t sysfs_dimlayer_hbm_read(struct device *dev,
 }
 
 static ssize_t sysfs_dimlayer_hbm_write(struct device *dev,
-	struct device_attribute *attr, char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
     int enabled = 0;
     sscanf(buf, "%d", &enabled);
@@ -5422,7 +5422,7 @@ static ssize_t sysfs_fod_hbm_en_read(struct device *dev,
 }
 
 static ssize_t sysfs_fod_hbm_en_write(struct device *dev,
-	struct device_attribute *attr, char *buf, size_t count)
+	struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct dsi_display *display;
 	struct dsi_panel *panel;
