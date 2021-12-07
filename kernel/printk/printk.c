@@ -818,7 +818,9 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 			endp++;
 			len -= endp - line;
 			line = endp;
-		}
+           		if(strncmp(line, "logd: Skipping", sizeof("logd: Skipping")))
+				goto ignore;
+                }
 	}
 
 	if ((strstr(line, "healthd")) || (strstr(line, "logd")) ||
@@ -828,6 +830,7 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 	}
 
 	printk_emit(facility, level, NULL, 0, "%s", line);
+ignore:
 	kfree(buf);
 	return ret;
 }
