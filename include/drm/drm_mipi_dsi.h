@@ -288,12 +288,11 @@ int mipi_dsi_dcs_set_display_brightness_hbm(struct mipi_dsi_device *dsi,
 					u16 brightness);
 int mipi_dsi_dcs_get_display_brightness(struct mipi_dsi_device *dsi,
 					u16 *brightness);
-int mipi_dsi_dcs_get_elvss_data(struct mipi_dsi_device *dsi,
-					u8 *val);
-int mipi_dsi_dcs_get_elvss_data_1(struct mipi_dsi_device *dsi,
-					u8 *val);
-int mipi_dsi_dcs_set_elvss_dim_off(struct mipi_dsi_device *dsi,
-					u8 val);
+int mipi_dsi_dcs_set_display_brightness_large(struct mipi_dsi_device *dsi,
+					     u16 brightness);
+int mipi_dsi_dcs_get_display_brightness_large(struct mipi_dsi_device *dsi,
+					     u16 *brightness);
+
 /**
  * struct mipi_dsi_driver - DSI driver
  * @driver: device driver model driver
