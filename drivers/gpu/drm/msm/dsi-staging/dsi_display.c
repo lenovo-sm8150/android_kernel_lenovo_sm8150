@@ -216,7 +216,7 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 
 	bl_scale_ad = panel->bl_config.bl_scale_ad;
 	bl_temp = (u32)bl_temp * bl_scale_ad / MAX_AD_BL_SCALE_LEVEL;
-	
+
 	if (is_dimlayer_bl_enable) {
 		bl_temp = bl_temp > panel->bl_config.bl_dimlayer_dc_level ? bl_temp : panel->bl_config.bl_dimlayer_dc_level;
 	}
@@ -5438,7 +5438,7 @@ static ssize_t sysfs_fod_hbm_en_write(struct device *dev,
     sscanf(buf, "%d", &enabled);
 
 	panel = display->panel;
-	
+
 	is_fod_hbm_enabled = enabled > 0;
 
 	mutex_lock(&panel->panel_lock);
@@ -5448,14 +5448,14 @@ static ssize_t sysfs_fod_hbm_en_write(struct device *dev,
     return count;
 }
 
-static DEVICE_ATTR(dimlayer_bl, 0664,
+static DEVICE_ATTR(dc, 0664,
 			sysfs_dimlayer_bl_read,
 			sysfs_dimlayer_bl_write);
 
-static DEVICE_ATTR(dimlayer_hbm, 0664,
+static DEVICE_ATTR(hbm, 0664,
 			sysfs_dimlayer_hbm_read,
 			sysfs_dimlayer_hbm_write);
-			
+
 static DEVICE_ATTR(doze_status, 0644,
 			sysfs_doze_status_read,
 			sysfs_doze_status_write);
@@ -5484,8 +5484,8 @@ static struct attribute *display_fs_attrs[] = {
 	&dev_attr_doze_status.attr,
 	&dev_attr_doze_mode.attr,
 	&dev_attr_fod_ui.attr,
-	&dev_attr_dimlayer_bl.attr,
-	&dev_attr_dimlayer_hbm.attr,
+	&dev_attr_dc.attr,
+	&dev_attr_hbm.attr,
 	&dev_attr_fod_hbm_en.attr,
 	&dev_attr_chen_need_active_hbm_next_frame.attr,
 	&dev_attr_dimlayer_hbm_is_single_layer.attr,
