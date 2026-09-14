@@ -17,11 +17,6 @@
 	reg = <0x87900000 0x3E00000>;
 };
 
-
-		&removed_regions {
-			reg = <0x0 0x86200000 0x0 0x7100000>;
-		};
-
 		&pil_modem_mem {
                         compatible = "removed-dma-pool";
                         no-map;
