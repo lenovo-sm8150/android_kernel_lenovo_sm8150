@@ -5426,7 +5426,7 @@ static ssize_t sysfs_fod_hbm_en_write(struct device *dev,
 	struct dsi_display *display;
 	struct dsi_panel *panel;
 	int rc = 0;
-    int enabled = 0;
+	int enabled = 0;
 
 	display = dev_get_drvdata(dev);
 	if (!display) {
@@ -5434,17 +5434,36 @@ static ssize_t sysfs_fod_hbm_en_write(struct device *dev,
 		return -EINVAL;
 	}
 
-    sscanf(buf, "%d", &enabled);
+	if (kstrtoint(buf, 0, &enabled)) {
+		pr_err("Invalid fod_hbm_en value\n");
+		return -EINVAL;
+	}
 
 	panel = display->panel;
 
-	is_fod_hbm_enabled = enabled > 0;
-
 	mutex_lock(&panel->panel_lock);
-	dsi_panel_set_fod_hbm(panel, is_fod_hbm_enabled);
+	if (dsi_panel_initialized(panel))
+		rc = dsi_panel_set_fod_hbm(panel, enabled > 0);
+	else
+		pr_debug("[%s] panel off, latching FOD HBM %d\n",
+				panel->name, enabled);
 	mutex_unlock(&panel->panel_lock);
 
-    return count;
+	/* While the panel is off nothing is sent: the state is only latched and
+	 * replayed by dsi_panel_enable() after the panel ON sequence, so a
+	 * request that arrives during a wake is not an error. When the panel is
+	 * on, record the state only after it took the command, so a failed
+	 * transfer leaves the cached state matching the hardware.
+	 */
+	if (rc) {
+		pr_err("[%s] failed to set FOD HBM %d, rc=%d\n",
+				panel->name, enabled, rc);
+		return rc;
+	}
+
+	is_fod_hbm_enabled = enabled > 0;
+
+	return count;
 }
 
 static DEVICE_ATTR(dc, 0664,

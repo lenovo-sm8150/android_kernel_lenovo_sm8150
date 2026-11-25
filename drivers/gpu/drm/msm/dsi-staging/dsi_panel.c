@@ -862,16 +862,15 @@ error:
 
 static u32 dsi_panel_get_backlight(struct dsi_panel *panel)
 {
-	u32 bl_level;
-
+	/* Any doze mode we do not have a dedicated level for falls back to the
+	 * normal backlight level instead of leaving bl_level uninitialised.
+	 */
 	if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_HBM)
-		bl_level = panel->bl_config.bl_doze_hbm;
-	else if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_LPM)
-		bl_level = panel->bl_config.bl_doze_lpm;
-	else if (!panel->doze_enabled)
-		bl_level = panel->bl_config.bl_level;
+		return panel->bl_config.bl_doze_hbm;
+	if (panel->doze_enabled && panel->doze_mode == DSI_DOZE_LPM)
+		return panel->bl_config.bl_doze_lpm;
 
-	return bl_level;
+	return panel->bl_config.bl_level;
 }
 
 static u32 interpolate(uint32_t x, uint32_t xa, uint32_t xb, uint32_t ya, uint32_t yb)
@@ -976,6 +975,26 @@ int dsi_panel_set_doze_mode(struct dsi_panel *panel, enum dsi_doze_mode_type mod
 	return dsi_panel_update_doze(panel);
 }
 
+/* Mirror the scaling dsi_display_set_backlight() applies, so pushing a cached
+ * level back to the panel does not bypass bl_scale/bl_scale_ad or the dimlayer
+ * brightness floor.
+ */
+static u32 dsi_panel_get_scaled_backlight(struct dsi_panel *panel)
+{
+	u64 bl_temp;
+
+	bl_temp = (u64)dsi_panel_get_backlight(panel) *
+			panel->bl_config.bl_scale / MAX_BL_SCALE_LEVEL;
+	bl_temp = bl_temp * panel->bl_config.bl_scale_ad /
+			MAX_AD_BL_SCALE_LEVEL;
+
+	if (is_dimlayer_bl_enable &&
+			bl_temp < panel->bl_config.bl_dimlayer_dc_level)
+		bl_temp = panel->bl_config.bl_dimlayer_dc_level;
+
+	return (u32)bl_temp;
+}
+
 extern bool is_fod_hbm_enabled;
 int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 {
@@ -986,16 +1005,45 @@ int dsi_panel_set_fod_hbm(struct dsi_panel *panel, bool status)
 		if (rc)
 			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_ON cmd, rc=%d\n",
 					panel->name, rc);
-	} else if (panel->doze_enabled) {
-		dsi_panel_update_doze(panel);
-	} else {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
-		if (rc)
-			pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
-					panel->name, rc);
+
+		return rc;
 	}
 
-	return rc;
+	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DISP_HBM_FOD_OFF);
+	if (rc) {
+		pr_err("[%s] failed to send DSI_CMD_SET_DISP_HBM_FOD_OFF cmd, rc=%d\n",
+				panel->name, rc);
+		return rc;
+	}
+
+	if (panel->doze_enabled) {
+		/* The doze command set was assumed to drop FOD HBM on its own,
+		 * which left the panel in HBM while is_fod_hbm_enabled reported
+		 * the opposite. The HBM FOD off command is sent above now, so only
+		 * put the panel back into the doze state it is in.
+		 */
+		int doze_rc = dsi_panel_update_doze(panel);
+
+		if (doze_rc)
+			pr_warn("[%s] failed to restore doze state, rc=%d\n",
+					panel->name, doze_rc);
+	} else if (panel->bl_config.type == DSI_BACKLIGHT_DCS) {
+		/* The FOD HBM on command raises the panel brightness above
+		 * bl-max-level (e.g. 0F FF on the nt37700) and the panels do not
+		 * restore it when the HBM FOD off command runs, so the panel would
+		 * stay at full brightness until userspace happens to change the
+		 * backlight. Push the last level back down, scaled the same way a
+		 * normal backlight update would be.
+		 */
+		int bl_rc = dsi_panel_update_backlight(panel,
+				dsi_panel_get_scaled_backlight(panel));
+
+		if (bl_rc)
+			pr_err("[%s] failed to restore backlight, rc=%d\n",
+					panel->name, bl_rc);
+	}
+
+	return 0;
 }
 
 int dsi_panel_set_backlight(struct dsi_panel *panel, u32 bl_lvl)
@@ -4793,16 +4841,24 @@ int dsi_panel_enable(struct dsi_panel *panel)
                 }
         }
 #endif
-	if (is_fod_hbm_enabled || is_dimlayer_hbm_enabled) {
-    	dsi_panel_set_fod_hbm(panel, true);
-	}
-
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_ON);
 	if (rc)
 		pr_err("[%s] failed to send DSI_CMD_SET_ON cmds, rc=%d\n",
 		       panel->name, rc);
 	else
 		panel->panel_initialized = true;
+
+	/* Restore FOD/dimlayer HBM only once the ON sequence is on the wire: a
+	 * panel that is still powering up drops the HBM command set, which left
+	 * the fingerprint area dim until the HAL re-armed it.
+	 */
+	if (is_fod_hbm_enabled || is_dimlayer_hbm_enabled) {
+		int hbm_rc = dsi_panel_set_fod_hbm(panel, true);
+
+		if (hbm_rc)
+			pr_err("[%s] failed to restore FOD HBM, rc=%d\n",
+			       panel->name, hbm_rc);
+	}
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -4902,6 +4958,11 @@ int dsi_panel_disable(struct dsi_panel *panel)
 	panel->panel_initialized = false;
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	panel->doze_enabled = false;
+	/* FOD HBM does not survive a blank. Keeping the flag would make the next
+	 * screen-on raise the panel back to HBM brightness for an ordinary wake,
+	 * so drop it here and let the HAL re-arm it for the next unlock.
+	 */
+	is_fod_hbm_enabled = false;
 
 	mutex_unlock(&panel->panel_lock);
 	return rc;
